@@ -1,0 +1,142 @@
+# GÖKTÜRK Araç Profili — Simülasyon Shuttle (Faz 1)
+# Yeni model = bu dosyayı kopyala ve düzenle. Çekirdek koda dokunma.
+
+profile_version: "1.0"
+id: "shuttle-sim-v1"
+name: "Otonom Shuttle (Simülasyon)"
+model_3d: "models/shuttle_sim.glb"
+architecture: "zonal"
+notes: "CARLA + Autoware + ROS2 FastDDS tabanlı simülasyon profili"
+
+networks:
+  - id: "vcan0"
+    type: "CAN"
+    adapter: "socketcan"
+    interface: "vcan0"
+
+  - id: "ros2_default"
+    type: "ros2-dds"
+    adapter: "ros2"
+    domain_id: 0
+    middleware: "FastDDS"
+
+  - id: "carla_sim"
+    type: "simulation"
+    adapter: "carla"
+    host: "localhost"
+    port: 2000
+
+components:
+
+  # ── Bağlantı ──────────────────────────────────────────────────────────────
+  - id: "tcu"
+    label: "Telematik Kontrol Ünitesi (TCU)"
+    category: "connectivity"
+    position_3d: [0.0, 2.8, 0.5]
+    attack_surfaces: ["telematics", "cellular", "wifi", "ota"]
+    r155_vectors: ["R155-1.1", "R155-5.1", "R155-3.1", "R155-3.4"]
+    networks: ["vcan0"]
+    test_status: "not_tested"
+
+  - id: "v2x_unit"
+    label: "V2X Birimi + Anten"
+    category: "connectivity"
+    position_3d: [0.0, 3.0, 0.9]
+    attack_surfaces: ["v2x"]
+    r155_vectors: ["R155-2.7", "R155-2.1"]
+    networks: ["ros2_default"]
+    test_status: "not_tested"
+
+  # ── Sensörler ─────────────────────────────────────────────────────────────
+  - id: "lidar_front"
+    label: "Ön LiDAR"
+    category: "sensor"
+    position_3d: [2.1, 0.0, 1.2]
+    attack_surfaces: ["sensor-spoofing", "ros2-dds"]
+    r155_vectors: ["R155-2.9", "R155-5.7", "R155-6.7"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  - id: "lidar_rear"
+    label: "Arka LiDAR"
+    category: "sensor"
+    position_3d: [-2.1, 0.0, 1.2]
+    attack_surfaces: ["sensor-spoofing", "ros2-dds"]
+    r155_vectors: ["R155-2.9", "R155-5.7"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  - id: "gnss"
+    label: "GPS/GNSS Alıcısı"
+    category: "sensor"
+    position_3d: [0.0, 0.0, 1.5]
+    attack_surfaces: ["sensor-spoofing"]
+    r155_vectors: ["R155-2.8"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  - id: "camera_front"
+    label: "Ön Kamera (RGB)"
+    category: "sensor"
+    position_3d: [2.4, 0.0, 0.9]
+    attack_surfaces: ["sensor-spoofing", "adversarial-ml"]
+    r155_vectors: ["R155-2.9", "R155-6.7"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  - id: "radar_front"
+    label: "Ön Radar (mmWave)"
+    category: "sensor"
+    position_3d: [2.3, 0.0, 0.5]
+    attack_surfaces: ["sensor-spoofing"]
+    r155_vectors: ["R155-2.9"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  # ── Hesaplama / ağ ────────────────────────────────────────────────────────
+  - id: "hpc"
+    label: "Merkezi HPC (ROS2 Host)"
+    category: "compute"
+    position_3d: [0.0, 0.0, 0.3]
+    attack_surfaces: ["ros2-dds", "firmware", "os"]
+    r155_vectors: ["R155-6.1", "R155-6.4", "R155-5.6", "R155-5.7"]
+    networks: ["ros2_default", "vcan0"]
+    test_status: "not_tested"
+
+  - id: "gateway_ecu"
+    label: "Merkezi Gateway ECU"
+    category: "network"
+    position_3d: [0.2, 0.0, 0.2]
+    attack_surfaces: ["in-vehicle-network", "firewall-bypass"]
+    r155_vectors: ["R155-2.2", "R155-2.4", "R155-5.4"]
+    networks: ["vcan0"]
+    test_status: "not_tested"
+
+  # ── Teşhis / fiziksel ─────────────────────────────────────────────────────
+  - id: "obd2_port"
+    label: "OBD-II Portu"
+    category: "diagnostic"
+    position_3d: [0.8, -0.5, 0.0]
+    attack_surfaces: ["diagnostic", "physical"]
+    r155_vectors: ["R155-5.5", "R155-7.1"]
+    networks: ["vcan0"]
+    test_status: "not_tested"
+
+  - id: "debug_ports"
+    label: "Debug Portları (JTAG/UART)"
+    category: "physical"
+    position_3d: [0.0, -2.5, 0.1]
+    attack_surfaces: ["physical", "hardware"]
+    r155_vectors: ["R155-7.4", "R155-7.1"]
+    networks: []
+    test_status: "not_tested"
+
+  # ── EV şarj ───────────────────────────────────────────────────────────────
+  - id: "charge_port"
+    label: "Şarj Portu (ISO 15118)"
+    category: "ev-charging"
+    position_3d: [-2.5, 0.5, 0.2]
+    attack_surfaces: ["ev-charging", "communication"]
+    r155_vectors: ["R155-5.8", "R155-2.1"]
+    networks: []
+    test_status: "not_tested"

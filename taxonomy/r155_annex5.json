@@ -1,0 +1,267 @@
+{
+  "version": "UNECE R155 Annex 5",
+  "total_vectors": 69,
+  "categories": [
+    {
+      "id": 1,
+      "code": "R155-1",
+      "label": "Arka uç sunuculara yönelik tehditler",
+      "label_en": "Threats regarding back-end servers",
+      "vectors": [
+        {
+          "id": "R155-1.1",
+          "desc": "Yetkisiz uzaktan sunucu erişimi",
+          "surface": "backend"
+        },
+        {
+          "id": "R155-1.2",
+          "desc": "Personel tarafından hak kötüye kullanımı",
+          "surface": "backend"
+        },
+        {
+          "id": "R155-1.3",
+          "desc": "Sunucuya yetkisiz internet erişimi",
+          "surface": "backend"
+        },
+        {
+          "id": "R155-1.4",
+          "desc": "Tedarik zinciri saldırısı (backend)",
+          "surface": "backend"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "code": "R155-2",
+      "label": "İletişim kanallarına yönelik tehditler",
+      "label_en": "Threats regarding communication channels",
+      "vectors": [
+        {
+          "id": "R155-2.1",
+          "desc": "Mesaj sahteciliği / spoofing",
+          "surface": "communication"
+        },
+        {
+          "id": "R155-2.2",
+          "desc": "Mesaj enjeksiyonu (CAN, Ethernet)",
+          "surface": "in-vehicle-network"
+        },
+        {
+          "id": "R155-2.3",
+          "desc": "Bilgi dinleme / sniffing",
+          "surface": "in-vehicle-network"
+        },
+        {
+          "id": "R155-2.4",
+          "desc": "Servis engelleme / DoS",
+          "surface": "communication"
+        },
+        {
+          "id": "R155-2.5",
+          "desc": "Replay saldırısı",
+          "surface": "in-vehicle-network"
+        },
+        {
+          "id": "R155-2.6",
+          "desc": "Ortadaki adam / MitM",
+          "surface": "communication"
+        },
+        {
+          "id": "R155-2.7",
+          "desc": "V2X mesaj manipülasyonu",
+          "surface": "v2x"
+        },
+        {
+          "id": "R155-2.8",
+          "desc": "GPS/GNSS spoofing",
+          "surface": "sensor"
+        },
+        {
+          "id": "R155-2.9",
+          "desc": "Sensör (LiDAR/kamera/radar) spoofing",
+          "surface": "sensor"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "code": "R155-3",
+      "label": "Güncelleme prosedürlerine yönelik tehditler",
+      "label_en": "Threats regarding update procedures",
+      "vectors": [
+        {
+          "id": "R155-3.1",
+          "desc": "Güncelleme öncesi yazılım manipülasyonu",
+          "surface": "ota"
+        },
+        {
+          "id": "R155-3.2",
+          "desc": "Güncelleme kanalına DoS",
+          "surface": "ota"
+        },
+        {
+          "id": "R155-3.3",
+          "desc": "Yetkisiz yazılım yükleme",
+          "surface": "ota"
+        },
+        {
+          "id": "R155-3.4",
+          "desc": "İmza doğrulama atlatma",
+          "surface": "ota"
+        },
+        {
+          "id": "R155-3.5",
+          "desc": "OTA kanal gizliliği ihlali",
+          "surface": "ota"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "code": "R155-4",
+      "label": "İstenmeyen insan davranışlarına yönelik tehditler",
+      "label_en": "Threats regarding unintended human actions",
+      "vectors": [
+        {
+          "id": "R155-4.1",
+          "desc": "Sosyal mühendislik / phishing",
+          "surface": "human"
+        },
+        {
+          "id": "R155-4.2",
+          "desc": "Meşru teşhis erişiminin kötüye kullanımı",
+          "surface": "diagnostic"
+        },
+        {
+          "id": "R155-4.3",
+          "desc": "Güvensiz varsayılan yapılandırma",
+          "surface": "human"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "code": "R155-5",
+      "label": "Dış bağlanabilirliğe yönelik tehditler",
+      "label_en": "Threats regarding external connectivity",
+      "vectors": [
+        {
+          "id": "R155-5.1",
+          "desc": "Telematik kanalı istismarı (hücresel/WiFi)",
+          "surface": "telematics"
+        },
+        {
+          "id": "R155-5.2",
+          "desc": "Bluetooth / kısa mesafeli kablosuz saldırı",
+          "surface": "telematics"
+        },
+        {
+          "id": "R155-5.3",
+          "desc": "USB / fiziksel port saldırısı",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-5.4",
+          "desc": "IVI / infotainment üzerinden pivot",
+          "surface": "ivi"
+        },
+        {
+          "id": "R155-5.5",
+          "desc": "OBD-II teşhis portu istismarı",
+          "surface": "diagnostic"
+        },
+        {
+          "id": "R155-5.6",
+          "desc": "ROS2/DDS kimliksiz topic erişimi",
+          "surface": "ros2-dds"
+        },
+        {
+          "id": "R155-5.7",
+          "desc": "ROS2/DDS mesaj enjeksiyonu",
+          "surface": "ros2-dds"
+        },
+        {
+          "id": "R155-5.8",
+          "desc": "EV şarj kanalı saldırısı (ISO 15118)",
+          "surface": "ev-charging"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "code": "R155-6",
+      "label": "Veri ve koda yönelik tehditler",
+      "label_en": "Threats regarding data and code",
+      "vectors": [
+        {
+          "id": "R155-6.1",
+          "desc": "Firmware değiştirme / zararlı kod",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.2",
+          "desc": "Kriptografik anahtar çalma",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.3",
+          "desc": "Kişisel veri sızdırma",
+          "surface": "data"
+        },
+        {
+          "id": "R155-6.4",
+          "desc": "Yazılım bütünlüğü ihlali",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.5",
+          "desc": "ECU firmware tersine mühendislik",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.6",
+          "desc": "Güvenli depolama (HSM) aşımı",
+          "surface": "hardware"
+        },
+        {
+          "id": "R155-6.7",
+          "desc": "Adversarial ML / algı manipülasyonu",
+          "surface": "sensor"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "code": "R155-7",
+      "label": "Araç fiziksel zafiyetlerine yönelik tehditler",
+      "label_en": "Threats regarding vehicle physical vulnerability",
+      "vectors": [
+        {
+          "id": "R155-7.1",
+          "desc": "İzinsiz fiziksel ECU erişimi",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-7.2",
+          "desc": "Donanım manipülasyonu / kurcalama",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-7.3",
+          "desc": "Yan kanal saldırısı (güç/zamanlama)",
+          "surface": "hardware"
+        },
+        {
+          "id": "R155-7.4",
+          "desc": "Debug portları üzerinden erişim (JTAG/UART)",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-7.5",
+          "desc": "Hata enjeksiyonu (fault/glitch injection)",
+          "surface": "hardware"
+        }
+      ]
+    }
+  ]
+}
