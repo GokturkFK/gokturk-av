@@ -14,7 +14,7 @@ import uuid
 @dataclass
 class Finding:
     """Test modülünün ürettiği bulgu kaydı.
-    
+
     Her bulgu, R155 taksonomi ID'sine ve ISO 21434 etki boyutlarına bağlıdır.
     Bu sabit şema, bulgu verilerini araç modelinden bağımsız kılar.
     """
@@ -66,7 +66,7 @@ class Finding:
 
 class BasePlugin(ABC):
     """Abstract base for all GÖKTÜRK test modules.
-    
+
     Kullanım:
         class MyPlugin(BasePlugin):
             module_id = "my-test"

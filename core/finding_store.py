@@ -200,11 +200,14 @@ class FindingStore:
     ) -> List[Dict]:
         conditions, params = [], []
         if vehicle_profile_id:
-            conditions.append("vehicle_profile_id = ?"); params.append(vehicle_profile_id)
+            conditions.append("vehicle_profile_id = ?")
+            params.append(vehicle_profile_id)
         if session_id:
-            conditions.append("session_id = ?"); params.append(session_id)
+            conditions.append("session_id = ?")
+            params.append(session_id)
         if status:
-            conditions.append("status = ?"); params.append(status)
+            conditions.append("status = ?")
+            params.append(status)
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
         with self._conn() as conn:
             rows = conn.execute(
