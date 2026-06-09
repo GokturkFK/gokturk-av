@@ -27,6 +27,11 @@
           "id": "R155-1.4",
           "desc": "Tedarik zinciri saldırısı (backend)",
           "surface": "backend"
+        },
+        {
+          "id": "R155-1.5",
+          "desc": "Araç servisleri arka uç sunucusuna DoS",
+          "surface": "backend"
         }
       ]
     },
@@ -80,6 +85,26 @@
           "id": "R155-2.9",
           "desc": "Sensör (LiDAR/kamera/radar) spoofing",
           "surface": "sensor"
+        },
+        {
+          "id": "R155-2.10",
+          "desc": "PKES röle saldırısı (anahtarsız giriş sinyal aktarma)",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-2.11",
+          "desc": "Hücresel ağ kanalı jamming / sinyal manipülasyonu",
+          "surface": "telematics"
+        },
+        {
+          "id": "R155-2.12",
+          "desc": "NFC/RFID klonlama ve sahteciliği",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-2.13",
+          "desc": "DSRC / IEEE 802.11p protokol açıklarının istismarı",
+          "surface": "v2x"
         }
       ]
     },
@@ -113,6 +138,16 @@
           "id": "R155-3.5",
           "desc": "OTA kanal gizliliği ihlali",
           "surface": "ota"
+        },
+        {
+          "id": "R155-3.6",
+          "desc": "Eski sürüme geri döndürme (downgrade) saldırısı",
+          "surface": "ota"
+        },
+        {
+          "id": "R155-3.7",
+          "desc": "Güncelleme meta verisi / manifesto manipülasyonu",
+          "surface": "ota"
         }
       ]
     },
@@ -135,6 +170,16 @@
         {
           "id": "R155-4.3",
           "desc": "Güvensiz varsayılan yapılandırma",
+          "surface": "human"
+        },
+        {
+          "id": "R155-4.4",
+          "desc": "İç tehdit: yetkisiz harici cihaz bağlantısı",
+          "surface": "human"
+        },
+        {
+          "id": "R155-4.5",
+          "desc": "Operatör tarafından hatalı güvenlik yapılandırması",
           "surface": "human"
         }
       ]
@@ -184,6 +229,31 @@
           "id": "R155-5.8",
           "desc": "EV şarj kanalı saldırısı (ISO 15118)",
           "surface": "ev-charging"
+        },
+        {
+          "id": "R155-5.9",
+          "desc": "Bağlantılı mobil uygulama güvenlik açığı",
+          "surface": "ivi"
+        },
+        {
+          "id": "R155-5.10",
+          "desc": "Üçüncü taraf IVI uygulaması zafiyeti",
+          "surface": "ivi"
+        },
+        {
+          "id": "R155-5.11",
+          "desc": "Araç-Bulut API yetkisiz erişimi",
+          "surface": "telematics"
+        },
+        {
+          "id": "R155-5.12",
+          "desc": "V2I altyapısı üzerinden araç sistemlerine saldırı",
+          "surface": "v2x"
+        },
+        {
+          "id": "R155-5.13",
+          "desc": "Uzaktan telematik sisteme exploit ile erişim",
+          "surface": "telematics"
         }
       ]
     },
@@ -227,6 +297,41 @@
           "id": "R155-6.7",
           "desc": "Adversarial ML / algı manipülasyonu",
           "surface": "sensor"
+        },
+        {
+          "id": "R155-6.8",
+          "desc": "Arabellek taşması / bellek bozulması istismarı",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.9",
+          "desc": "Yarış koşulu / mantık hatası istismarı",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.10",
+          "desc": "Araç içinde saklanan kişisel veriye yetkisiz erişim",
+          "surface": "data"
+        },
+        {
+          "id": "R155-6.11",
+          "desc": "Olay veri kaydı (EDR / kara kutu) manipülasyonu",
+          "surface": "data"
+        },
+        {
+          "id": "R155-6.12",
+          "desc": "Tedarik zinciri yazılım saldırısı (üçüncü taraf bileşen)",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.13",
+          "desc": "Güvenli önyükleme (Secure Boot) atlatma",
+          "surface": "firmware"
+        },
+        {
+          "id": "R155-6.14",
+          "desc": "Hipervizör / konteyner ortamından kaçış",
+          "surface": "firmware"
         }
       ]
     },
@@ -260,6 +365,41 @@
           "id": "R155-7.5",
           "desc": "Hata enjeksiyonu (fault/glitch injection)",
           "surface": "hardware"
+        },
+        {
+          "id": "R155-7.6",
+          "desc": "TPMS sensörü klonlama ve sahteciliği",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-7.7",
+          "desc": "Optik sensörlerin lazer/güçlü ışıkla körleştirilmesi",
+          "surface": "sensor"
+        },
+        {
+          "id": "R155-7.8",
+          "desc": "Donanım geri mühendislik (PCB analiz / chip-off)",
+          "surface": "hardware"
+        },
+        {
+          "id": "R155-7.9",
+          "desc": "EMC / EMP tabanlı elektronik bozma saldırısı",
+          "surface": "hardware"
+        },
+        {
+          "id": "R155-7.10",
+          "desc": "Fiziksel erişimle kalıcı arka kapı implantasyonu",
+          "surface": "physical"
+        },
+        {
+          "id": "R155-7.11",
+          "desc": "Gömülü sistemden fiziksel anahtar / sır çıkarımı",
+          "surface": "hardware"
+        },
+        {
+          "id": "R155-7.12",
+          "desc": "Araç ağına fiziksel cihaz ekleme ile veri enjeksiyonu",
+          "surface": "physical"
         }
       ]
     }
