@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    image: goktürk-av:latest
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - GOKTÜRK_PASSWORD=${GOKTÜRK_PASSWORD:-goktürk2026}
+      - DB_PATH=data/findings.db
+    restart: unless-stopped
