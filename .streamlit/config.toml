@@ -1,0 +1,6 @@
+# GÖKTÜRK-AV — Streamlit yapılandırması
+# Port 8502'ye sabitlendi; VM'deki diğer projelerle (varsayılan 8501) çakışmasın diye.
+
+[server]
+port = 8502
+headless = true
