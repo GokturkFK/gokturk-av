@@ -76,18 +76,34 @@ class Orchestrator:
         return True, "OK"
 
     def _match_components(self, plugin: BasePlugin, components: List[Dict]) -> List[Dict]:
-        """Plugin'i, R155 vektörü veya saldırı yüzeyi eşleşen bileşenlere bağlar."""
-        matched = []
-        for c in components:
-            vectors = c.get("r155_vectors", []) or []
-            surfaces = c.get("attack_surfaces", []) or []
-            if plugin.r155_vector_id and plugin.r155_vector_id in vectors:
-                matched.append(c)
-            elif plugin.surface and any(
-                plugin.surface in s or s in plugin.surface for s in surfaces
-            ):
-                matched.append(c)
-        return matched
+        """Plugin'i bileşenlere bağlar.
+
+        Taksonomiye çapalı önceliklendirme: önce plugin'in R155 vektörünü
+        birebir taşıyan bileşenler aranır (kesin eşleşme). Hiçbir bileşen bu
+        vektörü taşımıyorsa, plugin'i tamamen atlamak yerine saldırı yüzeyi
+        (surface) üzerinden gevşek bir eşleşmeye düşülür — böylece profil
+        henüz o vektörle etiketlenmemiş olsa da plugin en azından ilgili
+        yüzeydeki bileşenlerde çalışır. Bu iki aşamalı yaklaşım, "GPS testi
+        kameraya da vulnerable etiketi yapıştırıyor" gibi yanlış-pozitif
+        genişlemeyi önler.
+        """
+        if plugin.r155_vector_id:
+            vector_matches = [
+                c for c in components
+                if plugin.r155_vector_id in (c.get("r155_vectors", []) or [])
+            ]
+            if vector_matches:
+                return vector_matches
+
+        if not plugin.surface:
+            return []
+        return [
+            c for c in components
+            if any(
+                plugin.surface in s or s in plugin.surface
+                for s in (c.get("attack_surfaces", []) or [])
+            )
+        ]
 
     # ── Çalıştırma ───────────────────────────────────────────────────────────
 
