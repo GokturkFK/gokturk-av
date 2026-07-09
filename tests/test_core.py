@@ -19,6 +19,8 @@ from plugins.modules.can_fuzz_plugin import CANFuzzPlugin
 from plugins.modules.ros2_topic_enum_plugin import ROS2TopicEnumPlugin
 from plugins.modules.gps_spoof_plugin import GPSSpoofPlugin
 from plugins.modules.obd2_enum_plugin import OBD2EnumPlugin
+from plugins.modules.ros2_topic_injection_plugin import ROS2TopicInjectionPlugin
+from plugins.modules.lidar_spoof_plugin import LidarSpoofPlugin
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
@@ -242,6 +244,36 @@ def test_obd2_enum_matrix():
     assert OBD2EnumPlugin(_mock("empty")).run({"id": "c"}).status == "inconclusive"
 
 
+def test_ros2_injection_matrix():
+    assert ROS2TopicInjectionPlugin(_mock("vulnerable")).run({"id": "c"}).status == "vulnerable"
+    assert ROS2TopicInjectionPlugin(_mock("secure")).run({"id": "c"}).status == "not_vulnerable"
+    assert ROS2TopicInjectionPlugin(_mock("empty")).run({"id": "c"}).status == "inconclusive"
+
+
+def test_ros2_injection_critical_safety_when_vulnerable():
+    f = ROS2TopicInjectionPlugin(_mock("vulnerable")).run({"id": "c"})
+    assert f.r155_vector_id == "R155-5.7"
+    assert f.impact_safety == "critical"
+    assert f.is_critical_safety()
+
+
+def test_lidar_spoof_matrix():
+    assert LidarSpoofPlugin(_mock("vulnerable")).run({"id": "lidar_front"}).status == "vulnerable"
+    assert LidarSpoofPlugin(_mock("secure")).run({"id": "lidar_front"}).status == "not_vulnerable"
+
+
+def test_lidar_spoof_empty_mode_rejected():
+    # empty modda inject_lidar_spoof her iki senaryoda da False döner → not_vulnerable
+    f = LidarSpoofPlugin(_mock("empty")).run({"id": "lidar_front"})
+    assert f.status == "not_vulnerable"
+
+
+def test_lidar_spoof_remove_scenario_is_critical():
+    f = LidarSpoofPlugin(_mock("vulnerable")).run({"id": "lidar_front"})
+    assert f.impact_safety == "critical"
+    assert f.is_critical_safety()
+
+
 def test_vulnerable_findings_carry_taxonomy():
     f = OBD2EnumPlugin(_mock("vulnerable")).run({"id": "c"})
     assert f.r155_vector_id == "R155-5.5"
@@ -261,15 +293,15 @@ def test_orchestrator_discovers_all_plugins():
     orch = Orchestrator(_mock(), FindingStore(db_path=":memory:"), strict_adapter=False)
     classes = orch.discover_plugin_classes()
     ids = {c.module_id for c in classes}
-    assert {"can-replay", "can-fuzz", "ros2-topic-enum",
-            "gps-spoof", "obd2-enum"} <= ids
+    assert {"can-replay", "can-fuzz", "ros2-topic-enum", "ros2-topic-injection",
+            "gps-spoof", "obd2-enum", "lidar-spoof"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
     db = FindingStore(db_path=str(tmp_path / "run.db"))
     orch = Orchestrator(_mock("vulnerable"), db, strict_adapter=False)
     findings = orch.run_all(profile)
-    assert len(findings) >= 5
+    assert len(findings) >= 7
     assert all(isinstance(f, Finding) for f in findings)
     stored = db.get_findings(vehicle_profile_id="shuttle-test")
     assert len(stored) == len(findings)
@@ -280,7 +312,7 @@ def test_orchestrator_vulnerable_profile_flags_risks(tmp_path, profile):
     orch = Orchestrator(_mock("vulnerable"), db, strict_adapter=False)
     orch.run_all(profile)
     cov = db.get_compliance_coverage("shuttle-test")
-    assert cov["vulnerable"] >= 5
+    assert cov["vulnerable"] >= 7
 
 
 def test_orchestrator_secure_profile_no_vulns(tmp_path, profile):
