@@ -13,6 +13,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.finding_store import FindingStore
+from core.orchestrator import Orchestrator
+from adapters.mock_adapter import MockAdapter
+from adapters.socketcan_adapter import SocketCANAdapter
 
 # ── Sayfa yapılandırması ──────────────────────────────────────────────────────
 st.set_page_config(
@@ -164,19 +167,85 @@ elif page_id == "run":
     if not st.session_state.selected_profile:
         st.warning("Önce Araç Seçimi sayfasından bir araç seç.")
     else:
-        st.info(
-            "Test motoru Faz 3'te bağlanacak. "
-            "Şu an için terminalde modülleri doğrudan çalıştırabilirsin:\n\n"
-            "```python\n"
-            "from adapters.socketcan_adapter import SocketCANAdapter\n"
-            "from plugins.modules.can_replay_plugin import CANReplayPlugin\n\n"
-            "adapter = SocketCANAdapter({'interface': 'vcan0'})\n"
-            "adapter.connect()\n"
-            "plugin = CANReplayPlugin(adapter)\n"
-            "finding = plugin.run({'id': 'obd2_port', 'interface': 'vcan0'})\n"
-            "print(finding.status, finding.title)\n"
-            "```"
-        )
+        prof_row = db.get_profile(st.session_state.selected_profile)
+        if not prof_row:
+            st.error("Seçili profil bulunamadı.")
+        else:
+            profile_yaml_text = prof_row["profile_yaml"]
+            profile_dict = yaml.safe_load(profile_yaml_text)
+            # Orchestrator her koşuda profili yeniden kaydeder; ham YAML'ı
+            # koru ki finding_store'daki profile_yaml alanı boşa düşmesin.
+            profile_dict["_yaml"] = profile_yaml_text
+
+            st.markdown(f"**Hedef:** {profile_dict.get('name', profile_dict.get('id'))}")
+            st.caption(f"{len(profile_dict.get('components', []))} bileşen tanımlı")
+
+            adapter_choice = st.radio(
+                "Adaptör",
+                ["Mock (Demo — donanımsız)", "SocketCAN (gerçek / vcan0)"],
+                horizontal=True,
+            )
+
+            if adapter_choice.startswith("Mock"):
+                mode = st.selectbox(
+                    "Mock modu",
+                    ["vulnerable", "secure", "empty"],
+                    format_func=lambda m: {
+                        "vulnerable": "Zafiyetli (demo)",
+                        "secure": "Güvenli (demo)",
+                        "empty": "Sessiz / erişilemez (demo)",
+                    }[m],
+                )
+                st.caption(
+                    "Demo modunda adaptör tipi kontrolü gevşetilir; tüm plugin'ler "
+                    "bileşenlere karşı çalıştırılır (gerçek donanım gerekmez)."
+                )
+                strict = False
+
+                def _make_adapter(mode=mode):
+                    return MockAdapter({"mode": mode})
+            else:
+                iface = st.text_input("CAN arayüzü", value="vcan0")
+                st.caption(
+                    "Gerçek modda yalnızca SocketCAN uyumlu plugin'ler çalışır "
+                    "(CAN replay/fuzz, OBD-II). vcan0/ICSim'in ayakta olması gerekir."
+                )
+                strict = True
+
+                def _make_adapter(iface=iface):
+                    return SocketCANAdapter({"interface": iface})
+
+            notes = st.text_input("Oturum notu (opsiyonel)", value="")
+
+            if st.button("▶ Testleri Çalıştır", type="primary"):
+                adapter = None
+                try:
+                    adapter = _make_adapter()
+                    adapter.connect()
+                except Exception as e:
+                    st.error(f"Adaptör bağlantı hatası: {e}")
+                else:
+                    orch = Orchestrator(adapter, db, strict_adapter=strict)
+                    with st.spinner("Test modülleri çalıştırılıyor..."):
+                        findings = orch.run_all(profile_dict, session_notes=notes)
+                    adapter.disconnect()
+
+                    vuln = sum(1 for f in findings if f.is_vulnerable())
+                    st.success(f"{len(findings)} test tamamlandı — {vuln} zafiyetli bulgu.")
+
+                    for f in findings:
+                        color = {"vulnerable": "🔴", "not_vulnerable": "🟢",
+                                 "inconclusive": "🟡", "error": "⚫"}.get(f.status, "⚪")
+                        with st.expander(f"{color} {f.title}"):
+                            st.write(f.description)
+                            c1, c2, c3 = st.columns(3)
+                            c1.write(f"**R155:** {f.r155_vector_id or '—'}")
+                            c2.write(f"**Bileşen:** {f.component_id}")
+                            c3.write(f"**Fizibilite:** {f.attack_feasibility}")
+                            if f.remediation:
+                                st.info(f.remediation)
+
+                    st.caption("Sonuçlar 'Bulgular' ve 'Uyumluluk' sayfalarına kaydedildi.")
 
 # ── Bulgular ─────────────────────────────────────────────────────────────────
 elif page_id == "findings":
