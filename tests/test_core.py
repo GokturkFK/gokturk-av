@@ -21,6 +21,7 @@ from plugins.modules.gps_spoof_plugin import GPSSpoofPlugin
 from plugins.modules.obd2_enum_plugin import OBD2EnumPlugin
 from plugins.modules.ros2_topic_injection_plugin import ROS2TopicInjectionPlugin
 from plugins.modules.lidar_spoof_plugin import LidarSpoofPlugin
+from plugins.modules.v2x_spoof_plugin import V2XSpoofPlugin
 from core.report_generator import generate_compliance_report
 from docx import Document
 from io import BytesIO
@@ -216,6 +217,14 @@ def test_mock_modes_behaviour():
     assert _mock("secure").list_topics() and _mock("empty").list_topics() == []
 
 
+def test_mock_v2x_injection_behaviour():
+    # imzasız mesaj: sadece vulnerable kabul; imzalı: her modda kabul
+    assert _mock("vulnerable").inject_v2x_message(signed=False) is True
+    assert _mock("secure").inject_v2x_message(signed=False) is False
+    assert _mock("empty").inject_v2x_message(signed=False) is False
+    assert _mock("secure").inject_v2x_message(signed=True) is True
+
+
 # ── Plugin katmanı ───────────────────────────────────────────────────────────
 
 def test_can_replay_matrix():
@@ -290,6 +299,43 @@ def test_lidar_spoof_remove_scenario_is_critical():
     assert f.is_critical_safety()
 
 
+def test_v2x_spoof_matrix():
+    assert V2XSpoofPlugin(_mock("vulnerable")).run({"id": "v2x_unit"}).status == "vulnerable"
+    assert V2XSpoofPlugin(_mock("secure")).run({"id": "v2x_unit"}).status == "not_vulnerable"
+    assert V2XSpoofPlugin(_mock("empty")).run({"id": "v2x_unit"}).status == "not_vulnerable"
+
+
+def test_v2x_spoof_carries_taxonomy_when_vulnerable():
+    f = V2XSpoofPlugin(_mock("vulnerable")).run({"id": "v2x_unit"})
+    assert f.r155_vector_id == "R155-2.7"
+    assert f.r155_category == 2
+    assert f.impact_safety == "high"
+    assert f.is_vulnerable()
+
+
+def test_v2x_spoof_inconclusive_when_adapter_unsupported():
+    # Ham base adapter inject_v2x_message'i desteklemez -> NotImplementedError -> inconclusive
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = V2XSpoofPlugin(bare).run({"id": "v2x_unit"})
+    assert f.status == "inconclusive"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -302,7 +348,7 @@ def test_orchestrator_discovers_all_plugins():
     classes = orch.discover_plugin_classes()
     ids = {c.module_id for c in classes}
     assert {"can-replay", "can-fuzz", "ros2-topic-enum", "ros2-topic-injection",
-            "gps-spoof", "obd2-enum", "lidar-spoof"} <= ids
+            "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
