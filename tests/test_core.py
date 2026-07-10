@@ -1,7 +1,7 @@
 """
-GÖKTÜRK — Çekirdek Test Suite (Faz 2)
+GÖKTÜRK — Çekirdek Test Suite (Faz 2-4)
 Tüm katmanları kapsar: taksonomi, Finding şeması, FindingStore,
-mock adaptör, beş test modülü ve orchestrator.
+mock adaptör, yedi test modülü, orchestrator ve rapor üretici.
 
 Donanımsızdır; her şey MockAdapter üzerinden deterministik koşar.
 """
@@ -21,6 +21,9 @@ from plugins.modules.gps_spoof_plugin import GPSSpoofPlugin
 from plugins.modules.obd2_enum_plugin import OBD2EnumPlugin
 from plugins.modules.ros2_topic_injection_plugin import ROS2TopicInjectionPlugin
 from plugins.modules.lidar_spoof_plugin import LidarSpoofPlugin
+from core.report_generator import generate_compliance_report
+from docx import Document
+from io import BytesIO
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
@@ -244,6 +247,19 @@ def test_obd2_enum_matrix():
     assert OBD2EnumPlugin(_mock("empty")).run({"id": "c"}).status == "inconclusive"
 
 
+def test_vulnerable_findings_carry_taxonomy():
+    f = OBD2EnumPlugin(_mock("vulnerable")).run({"id": "c"})
+    assert f.r155_vector_id == "R155-5.5"
+    assert f.r155_category == 5
+    assert f.is_vulnerable()
+
+
+def test_plugin_never_raises_on_bad_component():
+    # component_config eksik olsa da plugin exception fırlatmamalı
+    f = CANReplayPlugin(_mock("vulnerable")).run({})
+    assert isinstance(f, Finding)
+
+
 def test_ros2_injection_matrix():
     assert ROS2TopicInjectionPlugin(_mock("vulnerable")).run({"id": "c"}).status == "vulnerable"
     assert ROS2TopicInjectionPlugin(_mock("secure")).run({"id": "c"}).status == "not_vulnerable"
@@ -274,17 +290,9 @@ def test_lidar_spoof_remove_scenario_is_critical():
     assert f.is_critical_safety()
 
 
-def test_vulnerable_findings_carry_taxonomy():
-    f = OBD2EnumPlugin(_mock("vulnerable")).run({"id": "c"})
-    assert f.r155_vector_id == "R155-5.5"
-    assert f.r155_category == 5
-    assert f.is_vulnerable()
-
-
-def test_plugin_never_raises_on_bad_component():
-    # component_config eksik olsa da plugin exception fırlatmamalı
-    f = CANReplayPlugin(_mock("vulnerable")).run({})
-    assert isinstance(f, Finding)
+def test_base_plugin_is_abstract():
+    with pytest.raises(TypeError):
+        BasePlugin(_mock())  # abstract run() → örneklenemez
 
 
 # ── Orchestrator ─────────────────────────────────────────────────────────────
@@ -331,6 +339,99 @@ def test_orchestrator_strict_adapter_skips_mismatch(tmp_path, profile):
     assert all(f.status == "inconclusive" for f in findings)
 
 
-def test_base_plugin_is_abstract():
-    with pytest.raises(TypeError):
-        BasePlugin(_mock())  # abstract run() → örneklenemez
+# ── Rapor Üretici ─────────────────────────────────────────────────────────────
+
+def _sample_finding(**overrides):
+    base = {
+        "component_id": "gateway_ecu",
+        "test_module_id": "can-replay",
+        "r155_vector_id": "R155-2.5",
+        "r155_category": 2,
+        "status": "vulnerable",
+        "title": "CAN Replay: Kimlik doğrulama YOK",
+        "description": "Açıklama metni.",
+        "impact_safety": "high",
+        "impact_financial": "none",
+        "impact_operational": "medium",
+        "impact_privacy": "none",
+        "attack_feasibility": "medium",
+        "remediation": "SecOC uygula.",
+    }
+    base.update(overrides)
+    return base
+
+
+def test_report_generates_valid_docx_bytes():
+    profile = {"id": "p1", "name": "Test Shuttle", "architecture": "zonal"}
+    findings = [_sample_finding()]
+    coverage = {"total": 1, "vulnerable": 1, "not_vulnerable": 0, "vectors_tested": 1}
+
+    docx_bytes = generate_compliance_report(profile, findings, coverage)
+    assert isinstance(docx_bytes, bytes)
+    assert len(docx_bytes) > 1000  # boş/bozuk dosya değil
+
+    # python-docx ile tekrar açılabiliyor mu (dosya bütünlüğü kontrolü)
+    doc = Document(BytesIO(docx_bytes))
+    assert len(doc.paragraphs) > 0
+
+
+def test_report_contains_key_sections():
+    profile = {"id": "p1", "name": "Test Shuttle", "architecture": "zonal"}
+    findings = [_sample_finding()]
+    coverage = {"total": 1, "vulnerable": 1, "not_vulnerable": 0, "vectors_tested": 1}
+
+    docx_bytes = generate_compliance_report(profile, findings, coverage)
+    doc = Document(BytesIO(docx_bytes))
+    full_text = "\n".join(p.text for p in doc.paragraphs)
+
+    assert "Yönetici Özeti" in full_text
+    assert "Metodoloji" in full_text
+    assert "Annex 5 Kapsam" in full_text
+    assert "Test Shuttle" in full_text
+
+
+def test_report_handles_empty_findings():
+    profile = {"id": "p1", "name": "Bos Profil"}
+    coverage = {"total": 0, "vulnerable": 0, "not_vulnerable": 0, "vectors_tested": 0}
+
+    docx_bytes = generate_compliance_report(profile, [], coverage)
+    doc = Document(BytesIO(docx_bytes))
+    full_text = "\n".join(p.text for p in doc.paragraphs)
+    assert "henüz kaydedilmiş bulgu bulunmamaktadır" in full_text
+
+
+def test_report_deduplicates_repeated_findings_across_components():
+    # Aynı bulgu (aynı vektör+başlık+açıklama) dört farklı bileşende tekrarlanıyor;
+    # rapor bunu TEK blok olarak, bileşenleri gruplayarak göstermeli.
+    findings = [
+        _sample_finding(
+            component_id=comp, r155_vector_id="R155-2.9",
+            title="LiDAR Spoof: 2/2 senaryo başarılı",
+            description="Ortak açıklama metni.", impact_safety="critical",
+        )
+        for comp in ["lidar_front", "lidar_rear", "camera_front", "radar_front"]
+    ]
+    profile = {"id": "p1", "name": "Test Shuttle"}
+    coverage = {"total": 4, "vulnerable": 4, "not_vulnerable": 0, "vectors_tested": 1}
+
+    docx_bytes = generate_compliance_report(profile, findings, coverage)
+    doc = Document(BytesIO(docx_bytes))
+    full_text = "\n".join(p.text for p in doc.paragraphs)
+
+    # Açıklama metni yalnızca BİR kez geçmeli (dört kez değil)
+    assert full_text.count("Ortak açıklama metni.") == 1
+    assert "lidar_front, lidar_rear, camera_front, radar_front" in full_text
+
+
+def test_report_end_to_end_with_real_orchestrator(tmp_path, profile):
+    db = FindingStore(db_path=str(tmp_path / "report.db"))
+    orch = Orchestrator(_mock("vulnerable"), db, strict_adapter=False)
+    orch.run_all(profile)
+
+    findings = db.get_findings(vehicle_profile_id="shuttle-test")
+    coverage = db.get_compliance_coverage("shuttle-test")
+    profile_dict = {"id": "shuttle-test", "name": "Test Shuttle"}
+
+    docx_bytes = generate_compliance_report(profile_dict, findings, coverage)
+    doc = Document(BytesIO(docx_bytes))
+    assert len(doc.tables) >= 3  # özet + bulgu + kapsam tablosu

@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.finding_store import FindingStore
 from core.orchestrator import Orchestrator
+from core.report_generator import generate_compliance_report
 from adapters.mock_adapter import MockAdapter
 from adapters.socketcan_adapter import SocketCANAdapter
 
@@ -289,15 +290,48 @@ elif page_id == "compliance":
 # ── Raporlama ─────────────────────────────────────────────────────────────────
 elif page_id == "report":
     st.markdown("## 📄 Rapor Oluştur")
-    st.info(
-        "ISO 21434 / UN R155 uyumlu rapor üretimi Faz 4'te devreye girecek. "
-        "Çıktı: otomatik doldurulmuş docx rapor."
-    )
-    if st.button("Ham Veriyi JSON Olarak İndir"):
+    if not st.session_state.selected_profile:
+        st.warning("Önce Araç Seçimi sayfasından bir araç seç.")
+    else:
+        prof_row = db.get_profile(st.session_state.selected_profile)
         findings = db.get_findings(vehicle_profile_id=st.session_state.selected_profile)
-        st.download_button(
-            "⬇ findings.json",
-            data=json.dumps(findings, ensure_ascii=False, indent=2),
-            file_name="goktürk_findings.json",
-            mime="application/json",
-        )
+        coverage = db.get_compliance_coverage(st.session_state.selected_profile)
+
+        if not findings:
+            st.info(
+                "Henüz bulgu yok. Önce 'Test Çalıştır' sayfasından bir test oturumu "
+                "başlat, sonra buradan rapor üret."
+            )
+        else:
+            st.markdown(
+                f"**{len(findings)}** bulgu, **{coverage['vectors_tested']}/69** "
+                "R155 vektörü kapsamında rapora dahil edilecek."
+            )
+
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("📄 Word Raporu Oluştur (.docx)", type="primary"):
+                    profile_dict = yaml.safe_load(prof_row["profile_yaml"]) if prof_row else {
+                        "id": st.session_state.selected_profile,
+                        "name": st.session_state.selected_profile,
+                    }
+                    with st.spinner("ISO 21434 / UN R155 raporu oluşturuluyor..."):
+                        docx_bytes = generate_compliance_report(profile_dict, findings, coverage)
+                    st.session_state["_report_docx"] = docx_bytes
+                    st.success("Rapor hazır — aşağıdan indirebilirsin.")
+
+            if st.session_state.get("_report_docx"):
+                st.download_button(
+                    "⬇ goktürk_uyumluluk_raporu.docx",
+                    data=st.session_state["_report_docx"],
+                    file_name="goktürk_uyumluluk_raporu.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                )
+
+            with c2:
+                st.download_button(
+                    "⬇ Ham Veriyi JSON Olarak İndir",
+                    data=json.dumps(findings, ensure_ascii=False, indent=2),
+                    file_name="goktürk_findings.json",
+                    mime="application/json",
+                )
