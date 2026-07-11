@@ -1,7 +1,8 @@
 """
 GÖKTÜRK — Çekirdek Test Suite (Faz 2-4)
 Tüm katmanları kapsar: taksonomi, Finding şeması, FindingStore,
-mock adaptör, yedi test modülü, orchestrator ve rapor üretici.
+mock adaptör, yedi test modülü, orchestrator, rapor üretici ve
+3D saldırı yüzeyi haritası.
 
 Donanımsızdır; her şey MockAdapter üzerinden deterministik koşar.
 """
@@ -22,6 +23,7 @@ from plugins.modules.obd2_enum_plugin import OBD2EnumPlugin
 from plugins.modules.ros2_topic_injection_plugin import ROS2TopicInjectionPlugin
 from plugins.modules.lidar_spoof_plugin import LidarSpoofPlugin
 from core.report_generator import generate_compliance_report
+from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from docx import Document
 from io import BytesIO
 
@@ -435,3 +437,126 @@ def test_report_end_to_end_with_real_orchestrator(tmp_path, profile):
     docx_bytes = generate_compliance_report(profile_dict, findings, coverage)
     doc = Document(BytesIO(docx_bytes))
     assert len(doc.tables) >= 3  # özet + bulgu + kapsam tablosu
+
+
+# ── 3D Saldırı Yüzeyi ─────────────────────────────────────────────────────────
+
+def _sample_components():
+    return [
+        {"id": "gateway_ecu", "label": "Gateway ECU", "category": "network",
+         "position_3d": [0.2, 0.0, 0.2], "attack_surfaces": ["in-vehicle-network"],
+         "r155_vectors": ["R155-2.2"]},
+        {"id": "lidar_front", "label": "Ön LiDAR", "category": "sensor",
+         "position_3d": [2.1, 0.0, 1.2], "attack_surfaces": ["sensor-spoofing"],
+         "r155_vectors": ["R155-2.9"]},
+        {"id": "obd2_port", "label": "OBD-II Portu", "category": "diagnostic",
+         "position_3d": [0.8, -0.5, 0.0], "attack_surfaces": ["diagnostic"],
+         "r155_vectors": ["R155-5.5"]},
+        {"id": "tcu", "label": "TCU", "category": "connectivity",
+         "position_3d": [0.0, 2.8, 0.5], "attack_surfaces": ["telematics"],
+         "r155_vectors": ["R155-5.1"]},
+    ]
+
+
+def test_compute_statuses_vulnerable_takes_priority():
+    components = _sample_components()
+    findings = [
+        {"component_id": "gateway_ecu", "status": "vulnerable"},
+        {"component_id": "gateway_ecu", "status": "not_vulnerable"},
+    ]
+    statuses = compute_component_statuses(components, findings)
+    assert statuses["gateway_ecu"] == "vulnerable"
+
+
+def test_compute_statuses_clean_when_only_not_vulnerable():
+    components = _sample_components()
+    findings = [{"component_id": "obd2_port", "status": "not_vulnerable"}]
+    statuses = compute_component_statuses(components, findings)
+    assert statuses["obd2_port"] == "clean"
+
+
+def test_compute_statuses_not_tested_when_no_findings():
+    components = _sample_components()
+    statuses = compute_component_statuses(components, [])
+    assert all(s == "not_tested" for s in statuses.values())
+
+
+def test_compute_statuses_ignores_inconclusive_and_error():
+    components = _sample_components()
+    findings = [
+        {"component_id": "tcu", "status": "inconclusive"},
+        {"component_id": "tcu", "status": "error"},
+    ]
+    statuses = compute_component_statuses(components, findings)
+    assert statuses["tcu"] == "not_tested"
+
+
+def test_compute_statuses_covers_all_components():
+    components = _sample_components()
+    statuses = compute_component_statuses(components, [])
+    assert set(statuses.keys()) == {c["id"] for c in components}
+
+
+def test_build_html_contains_component_data():
+    components = _sample_components()
+    statuses = {"gateway_ecu": "vulnerable", "lidar_front": "clean",
+                "obd2_port": "not_tested", "tcu": "not_tested"}
+    html = build_attack_surface_html("Test Shuttle", components, statuses)
+
+    assert "gateway_ecu" in html
+    assert "Ön LiDAR" in html
+    assert "#e24b4a" in html  # vulnerable rengi
+    assert "#63a922" in html  # clean rengi
+    assert "#ef9f27" in html  # not_tested rengi
+
+
+def test_build_html_contains_valid_importmap_json():
+    import json
+    import re
+
+    components = _sample_components()
+    statuses = compute_component_statuses(components, [])
+    html = build_attack_surface_html("Test Shuttle", components, statuses)
+
+    match = re.search(r'<script type="importmap">\s*(\{.*?\})\s*</script>', html, re.S)
+    assert match is not None
+    data = json.loads(match.group(1))  # geçerli JSON olmalı, exception atmamalı
+    assert "three" in data["imports"]
+
+
+def test_build_html_embeds_syntactically_valid_js():
+    import shutil
+    if shutil.which("node") is None:
+        pytest.skip("node kurulu değil — JS sözdizimi kontrolü atlandı")
+
+    components = _sample_components()
+    statuses = compute_component_statuses(components, [])
+    html = build_attack_surface_html("Test Shuttle", components, statuses)
+
+    start = html.index('<script type="module">') + len('<script type="module">')
+    end = html.index("</script>", start)
+    js_code = html[start:end]
+
+    # import ifadelerini node'un çözemeyeceği bir CDN'den çektiği için
+    # sözdizimi kontrolü amacıyla nötrleştiriyoruz; geri kalan JS gövdesi
+    # gerçek/değişmeden test edilir.
+    js_for_check = js_code.replace(
+        "import * as THREE from 'three';", "// import"
+    ).replace(
+        "import { OrbitControls } from 'three/addons/controls/OrbitControls.js';",
+        "const THREE = {}; const OrbitControls = function(){};"
+    )
+
+    import subprocess
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".mjs", mode="w", delete=False) as f:
+        f.write(js_for_check)
+        path = f.name
+
+    result = subprocess.run(["node", "--check", path], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+
+
+def test_build_html_handles_empty_components():
+    html = build_attack_surface_html("Bos Profil", [], {})
+    assert "gokturk-3d-root" in html
