@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from core.finding_store import FindingStore
 from core.orchestrator import Orchestrator
 from core.report_generator import generate_compliance_report
+from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from adapters.mock_adapter import MockAdapter
 from adapters.socketcan_adapter import SocketCANAdapter
 
@@ -146,17 +147,37 @@ elif page_id == "surface":
             data = yaml.safe_load(prof["profile_yaml"])
             st.markdown(f"### {data['name']}")
             st.caption(f"Mimari: {data.get('architecture', '??')} | Profil: v{data.get('profile_version', '?')}")
-            st.info("3B animasyonlu harita — Faz 4. Şu an bileşen tablosu:")
+
             components = data.get("components", [])
+            findings = db.get_findings(vehicle_profile_id=st.session_state.selected_profile)
+            statuses = compute_component_statuses(components, findings)
+
+            vuln_count = sum(1 for s in statuses.values() if s == "vulnerable")
+            clean_count = sum(1 for s in statuses.values() if s == "clean")
+            untested_count = sum(1 for s in statuses.values() if s == "not_tested")
+            m1, m2, m3 = st.columns(3)
+            m1.metric("🔴 Zafiyetli", vuln_count)
+            m2.metric("🟢 Temiz", clean_count)
+            m3.metric("🟡 Test Edilmedi", untested_count)
+
+            html = build_attack_surface_html(data.get("name", ""), components, statuses)
+            st.components.v1.html(html, height=520, scrolling=False)
+            st.caption(
+                "Sahneyi fare ile döndür/yakınlaştır; bir bileşene tıklayınca "
+                "altındaki panelde detayları görürsün."
+            )
+
+            st.divider()
+            st.markdown("**Bileşen Tablosu (metin görünümü)**")
             for comp in components:
-                status = comp.get("test_status", "not_tested")
+                status = statuses.get(comp.get("id"), "not_tested")
                 badge = {
                     "not_tested": "unknown-badge",
                     "clean": "clean-badge",
                     "vulnerable": "vuln-badge",
-                }.get(status, "unknown-badge")
+                }[status]
                 label = {"not_tested": "Test Edilmedi",
-                         "clean": "Temiz", "vulnerable": "Zafiyetli"}.get(status, status)
+                         "clean": "Temiz", "vulnerable": "Zafiyetli"}[status]
                 with st.expander(f"{comp['label']}  — {comp['category']}"):
                     st.markdown(f"<span class='{badge}'>{label}</span>", unsafe_allow_html=True)
                     st.write("**Saldırı yüzeyleri:**", ", ".join(comp.get("attack_surfaces", [])))

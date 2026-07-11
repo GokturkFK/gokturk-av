@@ -125,7 +125,7 @@ components:
   - id: "debug_ports"
     label: "Debug Portları (JTAG/UART)"
     category: "physical"
-    position_3d: [0.0, -2.5, 0.1]
+    position_3d: [0.0, -0.3, 0.1]
     attack_surfaces: ["physical", "hardware"]
     r155_vectors: ["R155-7.4", "R155-7.1"]
     networks: []
