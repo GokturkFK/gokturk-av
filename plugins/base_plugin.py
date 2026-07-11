@@ -6,7 +6,7 @@ Yeni saldırı/test = bu sınıfı miras alan yeni bir modül.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 import uuid
 
@@ -45,7 +45,7 @@ class Finding:
 
     # Otomatik alanlar
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def is_vulnerable(self) -> bool:
         return self.status == "vulnerable"

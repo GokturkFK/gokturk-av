@@ -6,7 +6,7 @@ SQLite tabanlı bulgu, oturum ve araç profili yönetimi.
 import sqlite3
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -103,7 +103,7 @@ class FindingStore:
             conn.execute("""
                 INSERT OR REPLACE INTO vehicle_profiles (id, name, profile_yaml, updated_at)
                 VALUES (?, ?, ?, ?)
-            """, (profile_id, name, profile_yaml, datetime.utcnow().isoformat()))
+            """, (profile_id, name, profile_yaml, datetime.now(timezone.utc).isoformat()))
         return profile_id
 
     def get_profiles(self) -> List[Dict]:
@@ -128,14 +128,14 @@ class FindingStore:
             conn.execute("""
                 INSERT INTO test_sessions (id, vehicle_profile_id, started_at, status, notes)
                 VALUES (?, ?, ?, 'running', ?)
-            """, (sid, vehicle_profile_id, datetime.utcnow().isoformat(), notes))
+            """, (sid, vehicle_profile_id, datetime.now(timezone.utc).isoformat(), notes))
         return sid
 
     def close_session(self, session_id: str, status: str = "completed"):
         with self._conn() as conn:
             conn.execute("""
                 UPDATE test_sessions SET ended_at = ?, status = ? WHERE id = ?
-            """, (datetime.utcnow().isoformat(), status, session_id))
+            """, (datetime.now(timezone.utc).isoformat(), status, session_id))
 
     def get_sessions(self, vehicle_profile_id: Optional[str] = None) -> List[Dict]:
         with self._conn() as conn:
