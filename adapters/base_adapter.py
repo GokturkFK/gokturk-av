@@ -69,6 +69,17 @@ class BaseAdapter(ABC):
     def inject_gps_spoof(self, lat: float, lon: float, alt: float = 0.0) -> bool:
         raise NotImplementedError(f"{self.adapter_type}: inject_gps_spoof desteklenmez")
 
+    # ── V2X (Araç-Araç / Araç-Altyapı) ────────────────────────────────────────
+
+    def inject_v2x_message(self, msg_type: str = "BSM", signed: bool = False) -> bool:
+        """Sahte/imzasız bir V2X mesajı enjekte etmeyi dener.
+
+        Dönüş True ise: mesaj alıcı yığın tarafından reddedilmeden kabul edildi
+        (yani PKI/SCMS imza doğrulaması eksik/atlatılabilir) — zafiyet.
+        False ise: mesaj reddedildi (imza doğrulama çalışıyor).
+        """
+        raise NotImplementedError(f"{self.adapter_type}: inject_v2x_message desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:
