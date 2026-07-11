@@ -157,3 +157,28 @@ class MockAdapter(BaseAdapter):
         if self.mode == "empty":
             return False  # V2X yığını yanıt vermiyor
         return self.mode == "vulnerable"
+
+    def fuzz_ecu(self, target_ecu: str, mode: str = "smart", count: int = 200) -> List[Dict]:
+        if self.mode == "empty":
+            return []  # ECU yanıt vermiyor / erişilemez
+        results = []
+        for i in range(count):
+            if self.mode == "secure":
+                # Girdi doğrulama + bellek koruması: girdiler reddedilir,
+                # hiçbir bellek bozulması/hang tetiklenmez.
+                results.append({"accepted": False, "memory_fault": False, "hang": False})
+            else:  # vulnerable
+                # Girdiler işleniyor; 'smart'/'replay-mutate' modları geçerli
+                # çerçeve yapısı kullandığı için daha sık fault tetikler.
+                if mode == "dumb":
+                    memory_fault = (i % 40 == 0)
+                    hang = (i % 90 == 0)
+                else:  # smart / replay-mutate — daha etkili
+                    memory_fault = (i % 20 == 0)
+                    hang = (i % 60 == 0)
+                results.append({
+                    "accepted": True,
+                    "memory_fault": memory_fault,
+                    "hang": hang,
+                })
+        return results

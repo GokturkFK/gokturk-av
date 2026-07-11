@@ -23,6 +23,7 @@ from plugins.modules.obd2_enum_plugin import OBD2EnumPlugin
 from plugins.modules.ros2_topic_injection_plugin import ROS2TopicInjectionPlugin
 from plugins.modules.lidar_spoof_plugin import LidarSpoofPlugin
 from plugins.modules.v2x_spoof_plugin import V2XSpoofPlugin
+from plugins.modules.ecu_fuzz_plugin import ECUFuzzPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from docx import Document
@@ -227,6 +228,16 @@ def test_mock_v2x_injection_behaviour():
     assert _mock("secure").inject_v2x_message(signed=True) is True
 
 
+def test_mock_fuzz_ecu_behaviour():
+    # vulnerable -> girdiler islenir + fault uretir; secure -> hepsi reddedilir; empty -> bos
+    vuln = _mock("vulnerable").fuzz_ecu("hpc", mode="smart", count=100)
+    assert vuln and any(r["memory_fault"] for r in vuln)
+    assert all(r["accepted"] for r in vuln)
+    sec = _mock("secure").fuzz_ecu("hpc", count=100)
+    assert sec and not any(r["accepted"] for r in sec)
+    assert _mock("empty").fuzz_ecu("hpc") == []
+
+
 # ── Plugin katmanı ───────────────────────────────────────────────────────────
 
 def test_can_replay_matrix():
@@ -338,6 +349,31 @@ def test_v2x_spoof_inconclusive_when_adapter_unsupported():
     assert f.status == "inconclusive"
 
 
+def test_ecu_fuzz_matrix():
+    assert ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"}).status == "vulnerable"
+    assert ECUFuzzPlugin(_mock("secure")).run({"id": "hpc"}).status == "not_vulnerable"
+    assert ECUFuzzPlugin(_mock("empty")).run({"id": "hpc"}).status == "inconclusive"
+
+
+def test_ecu_fuzz_carries_correct_taxonomy():
+    f = ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"})
+    assert f.r155_vector_id == "R155-6.8"
+    assert f.r155_category == 6
+    assert f.is_vulnerable()
+    assert f.impact_safety == "high"
+
+
+def test_ecu_fuzz_reports_memory_fault_in_title():
+    f = ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"})
+    assert "fault" in f.title.lower() or "bozulma" in f.title.lower()
+
+
+def test_ecu_fuzz_mode_config_respected():
+    plugin = ECUFuzzPlugin(_mock("vulnerable"), config={"fuzz_mode": "dumb", "count": 200})
+    f = plugin.run({"id": "hpc"})
+    assert f.status == "vulnerable"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -350,7 +386,7 @@ def test_orchestrator_discovers_all_plugins():
     classes = orch.discover_plugin_classes()
     ids = {c.module_id for c in classes}
     assert {"can-replay", "can-fuzz", "ros2-topic-enum", "ros2-topic-injection",
-            "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof"} <= ids
+            "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
