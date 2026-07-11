@@ -27,6 +27,7 @@ from plugins.modules.ecu_fuzz_plugin import ECUFuzzPlugin
 from plugins.modules.ota_attack_plugin import OTAAttackPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
+from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
 from docx import Document
 from io import BytesIO
 
@@ -679,3 +680,56 @@ def test_build_html_embeds_syntactically_valid_js():
 def test_build_html_handles_empty_components():
     html = build_attack_surface_html("Bos Profil", [], {})
     assert "gokturk-3d-root" in html
+
+
+def test_compute_vector_statuses_covers_all_69():
+    statuses = compute_vector_statuses([])
+    assert len(statuses) == 69
+    assert all(s == "not_tested" for s in statuses.values())
+
+
+def test_compute_vector_statuses_vulnerable_priority():
+    findings = [
+        {"r155_vector_id": "R155-2.5", "status": "vulnerable"},
+        {"r155_vector_id": "R155-2.5", "status": "not_vulnerable"},
+    ]
+    statuses = compute_vector_statuses(findings)
+    assert statuses["R155-2.5"] == "vulnerable"
+
+
+def test_compute_vector_statuses_clean_when_only_not_vulnerable():
+    findings = [{"r155_vector_id": "R155-5.5", "status": "not_vulnerable"}]
+    statuses = compute_vector_statuses(findings)
+    assert statuses["R155-5.5"] == "clean"
+
+
+def test_compute_vector_statuses_ignores_findings_without_vector():
+    findings = [{"status": "vulnerable"}]
+    statuses = compute_vector_statuses(findings)
+    assert all(s == "not_tested" for s in statuses.values())
+
+
+def test_build_heatmap_html_contains_all_69_cells():
+    html = build_heatmap_html([])
+    assert html.count('gk-heat-cell"') == 69
+
+
+def test_build_heatmap_html_reflects_findings():
+    findings = [{"r155_vector_id": "R155-2.5", "status": "vulnerable"}]
+    html = build_heatmap_html(findings)
+    assert "var(--red)" in html
+    assert "R155-2.5" in html
+
+
+def test_build_heatmap_html_escapes_tooltip_content():
+    html = build_heatmap_html([])
+    import re
+    titles = re.findall(r'title="([^"]*)"', html)
+    assert len(titles) == 69
+
+
+def test_build_heatmap_html_uses_theme_css_vars_not_hardcoded_colors():
+    html = build_heatmap_html([])
+    assert "var(--red)" in html
+    assert "var(--green)" in html
+    assert "var(--text-muted)" in html

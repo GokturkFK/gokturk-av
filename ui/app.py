@@ -16,6 +16,7 @@ from core.finding_store import FindingStore
 from core.orchestrator import Orchestrator
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
+from core.compliance_heatmap import build_heatmap_html
 from adapters.mock_adapter import MockAdapter
 from adapters.socketcan_adapter import SocketCANAdapter
 
@@ -746,6 +747,12 @@ elif page_id == "compliance":
         st.markdown("<br>", unsafe_allow_html=True)
         with st.expander("📂 Vektör Bazlı Ham Veri"):
             st.json(coverage["by_vector"])
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="gk-page-title" style="font-size:16px;">🗺️ Annex 5 Isı Haritası (69 Vektör)</div>',
+                unsafe_allow_html=True)
+    findings_all = db.get_findings(vehicle_profile_id=st.session_state.selected_profile)
+    st.markdown(build_heatmap_html(findings_all), unsafe_allow_html=True)
 
 # ── Raporlama ─────────────────────────────────────────────────────────────────
 elif page_id == "report":
