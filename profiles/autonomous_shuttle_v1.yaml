@@ -1,0 +1,130 @@
+# GÖKTÜRK Araç Profili — Otonom Servis Aracı v1
+# Gerçekçi bir Level 4 otonom shuttle mimarisini yansıtır (genel mimari
+# referans alınmıştır; belirli bir marka/model adı kullanılmamıştır).
+#
+# Şema açıklaması için bkz. profiles/README.md
+
+profile_version: "1.0"
+id: "autonomous-shuttle-v1"
+name: "Otonom Servis Aracı v1"
+model_3d: "models/autonomous_shuttle_v1.glb"
+architecture: "zonal"
+notes: >
+  Level 4 otonom servis aracı (küçük shuttle sınıfı) referans profili.
+  10 bileşen kataloğu: arka uç bağlanabilirlik, algı, teşhis, güncelleme ve
+  yolcu bağlanabilirlik yüzeylerinin tamamını kapsar.
+
+networks:
+  - id: "vcan0"
+    type: "CAN"
+    adapter: "socketcan"
+    interface: "vcan0"
+
+  - id: "ros2_default"
+    type: "ros2-dds"
+    adapter: "ros2"
+    domain_id: 0
+    middleware: "FastDDS"
+
+  - id: "carla_sim"
+    type: "simulation"
+    adapter: "carla"
+    host: "localhost"
+    port: 2000
+
+components:
+
+  # ── Ağ / Ağ Geçidi ──────────────────────────────────────────────────────────
+  - id: "gateway_ecu"
+    label: "Gateway ECU"
+    category: "network"
+    position_3d: [0.2, 0.3, -0.3]
+    attack_surfaces: ["in-vehicle-network", "firewall-bypass"]
+    r155_vectors: ["R155-2.2", "R155-2.4", "R155-2.5", "R155-5.4"]
+    networks: ["vcan0"]
+    test_status: "not_tested"
+
+  # ── Hesaplama ─────────────────────────────────────────────────────────────
+  - id: "hpc_compute"
+    label: "HPC / Compute Unit"
+    category: "compute"
+    position_3d: [0.0, 0.3, 0.3]
+    attack_surfaces: ["ros2-dds", "firmware", "os"]
+    r155_vectors: ["R155-6.1", "R155-6.4", "R155-6.8", "R155-5.6", "R155-5.7"]
+    networks: ["ros2_default", "vcan0"]
+    test_status: "not_tested"
+
+  # ── Algı / Sensörler ──────────────────────────────────────────────────────
+  - id: "gnss_receiver"
+    label: "GNSS Alıcısı"
+    category: "sensor"
+    position_3d: [-0.6, 2.4, 0.0]
+    attack_surfaces: ["sensor-spoofing"]
+    r155_vectors: ["R155-2.8"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  - id: "lidar_controller"
+    label: "LiDAR Kontrolcüsü"
+    category: "sensor"
+    position_3d: [3.0, 2.2, 0.0]
+    attack_surfaces: ["sensor-spoofing", "ros2-dds"]
+    r155_vectors: ["R155-2.9", "R155-6.7", "R155-5.7"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  - id: "camera_processor"
+    label: "Kamera İşlemcisi"
+    category: "sensor"
+    position_3d: [3.3, 1.6, 0.0]
+    attack_surfaces: ["sensor-spoofing", "adversarial-ml"]
+    r155_vectors: ["R155-2.9", "R155-6.7"]
+    networks: ["ros2_default", "carla_sim"]
+    test_status: "not_tested"
+
+  # ── Teşhis / Fiziksel ─────────────────────────────────────────────────────
+  - id: "obd2_port"
+    label: "OBD-II Port"
+    category: "diagnostic"
+    position_3d: [1.2, 0.0, -0.6]
+    attack_surfaces: ["diagnostic", "physical"]
+    r155_vectors: ["R155-5.5", "R155-7.1"]
+    networks: ["vcan0"]
+    test_status: "not_tested"
+
+  # ── Bağlanabilirlik ───────────────────────────────────────────────────────
+  - id: "v2x_obu"
+    label: "V2X OBU (On-Board Unit)"
+    category: "connectivity"
+    position_3d: [0.6, 2.4, 0.0]
+    attack_surfaces: ["v2x"]
+    r155_vectors: ["R155-2.7", "R155-2.1", "R155-5.12"]
+    networks: ["ros2_default"]
+    test_status: "not_tested"
+
+  - id: "telematics_module"
+    label: "Telematik Modülü"
+    category: "connectivity"
+    position_3d: [0.0, 2.4, 0.2]
+    attack_surfaces: ["telematics", "cellular", "ota"]
+    r155_vectors: ["R155-1.1", "R155-5.1", "R155-5.13", "R155-3.4", "R155-3.5", "R155-3.6"]
+    networks: ["vcan0"]
+    test_status: "not_tested"
+
+  - id: "ota_update_client"
+    label: "OTA Güncelleme İstemcisi"
+    category: "connectivity"
+    position_3d: [0.0, 0.3, -0.1]
+    attack_surfaces: ["ota"]
+    r155_vectors: ["R155-3.1", "R155-3.7", "R155-3.4"]
+    networks: ["vcan0"]
+    test_status: "not_tested"
+
+  - id: "passenger_wifi_ap"
+    label: "Yolcu Wi-Fi AP"
+    category: "connectivity"
+    position_3d: [-1.5, 1.8, 0.0]
+    attack_surfaces: ["telematics", "wifi"]
+    r155_vectors: ["R155-5.1", "R155-5.4"]
+    networks: []
+    test_status: "not_tested"

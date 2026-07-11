@@ -733,3 +733,72 @@ def test_build_heatmap_html_uses_theme_css_vars_not_hardcoded_colors():
     assert "var(--red)" in html
     assert "var(--green)" in html
     assert "var(--text-muted)" in html
+
+
+# ── Otonom Servis Aracı v1 Profili ─────────────────────────────────────────────
+
+def _load_autonomous_shuttle():
+    import yaml
+    with open("profiles/autonomous_shuttle_v1.yaml", encoding="utf-8") as f:
+        return yaml.safe_load(f.read())
+
+
+def test_autonomous_shuttle_profile_parses():
+    prof = _load_autonomous_shuttle()
+    assert prof["id"] == "autonomous-shuttle-v1"
+    assert "components" in prof
+
+
+def test_autonomous_shuttle_has_at_least_10_components():
+    prof = _load_autonomous_shuttle()
+    assert len(prof["components"]) >= 10
+
+
+def test_autonomous_shuttle_components_have_required_fields():
+    prof = _load_autonomous_shuttle()
+    required = {"id", "label", "category", "position_3d", "attack_surfaces",
+                "r155_vectors", "networks", "test_status"}
+    for comp in prof["components"]:
+        missing = required - set(comp.keys())
+        assert not missing, f"{comp.get('id')} eksik alanlar: {missing}"
+
+
+def test_autonomous_shuttle_component_ids_unique():
+    prof = _load_autonomous_shuttle()
+    ids = [c["id"] for c in prof["components"]]
+    assert len(ids) == len(set(ids))
+
+
+def test_autonomous_shuttle_all_r155_vectors_exist_in_taxonomy():
+    prof = _load_autonomous_shuttle()
+    tax = load_taxonomy()
+    valid_ids = {v["id"] for cat in tax["categories"] for v in cat["vectors"]}
+    for comp in prof["components"]:
+        for vid in comp["r155_vectors"]:
+            assert vid in valid_ids, f"{comp['id']}: gecersiz vektor {vid}"
+
+
+def test_autonomous_shuttle_runs_through_orchestrator(tmp_path):
+    prof = _load_autonomous_shuttle()
+    db = FindingStore(db_path=str(tmp_path / "shuttle_v1.db"))
+    orch = Orchestrator(_mock("vulnerable"), db, strict_adapter=False)
+    findings = orch.run_all(prof)
+    assert len(findings) > 0
+    assert all(isinstance(f, Finding) for f in findings)
+
+
+def test_autonomous_shuttle_compatible_with_3d_map_and_heatmap(tmp_path):
+    prof = _load_autonomous_shuttle()
+    db = FindingStore(db_path=str(tmp_path / "shuttle_v1.db"))
+    orch = Orchestrator(_mock("vulnerable"), db, strict_adapter=False)
+    orch.run_all(prof)
+
+    findings = db.get_findings()
+    statuses = compute_component_statuses(prof["components"], findings)
+    html3d = build_attack_surface_html(prof["name"], prof["components"], statuses)
+    assert "gokturk-3d-root" in html3d
+    for comp in prof["components"]:
+        assert comp["id"] in html3d
+
+    heat = build_heatmap_html(findings)
+    assert heat.count('gk-heat-cell"') == 69
