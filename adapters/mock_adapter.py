@@ -147,3 +147,13 @@ class MockAdapter(BaseAdapter):
 
     def inject_lidar_spoof(self, mode: str = "remove", target: Optional[str] = None) -> bool:
         return self.mode == "vulnerable"
+
+    def inject_v2x_message(self, msg_type: str = "BSM", signed: bool = False) -> bool:
+        # İmzalı bir mesaj her modda kabul edilir (meşru trafik).
+        # İmzasız/sahte mesaj yalnızca vulnerable modda kabul edilir;
+        # secure modda PKI/SCMS imza doğrulaması onu reddeder.
+        if signed:
+            return True
+        if self.mode == "empty":
+            return False  # V2X yığını yanıt vermiyor
+        return self.mode == "vulnerable"
