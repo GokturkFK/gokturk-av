@@ -182,3 +182,23 @@ class MockAdapter(BaseAdapter):
                     "hang": hang,
                 })
         return results
+
+    def ota_update_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda tüm OTA korumaları aktif (imza + versiyon + şifreleme).
+        # vulnerable modda hepsi atlatılabilir. empty modda kanal yanıtsız.
+        if self.mode == "empty":
+            return {"accepted": False, "detail": "OTA kanalı yanıt vermiyor"}
+        if self.mode == "secure":
+            detail = {
+                "rollback": "Versiyon kontrolü eski paketi reddetti",
+                "bad_signature": "İmza doğrulama bozuk paketi reddetti",
+                "plaintext": "Kanal TLS ile şifreli",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "rollback": "Eski sürüm imzalı paket kabul edildi (downgrade koruması yok)",
+            "bad_signature": "Bozuk imzalı paket kabul edildi (imza doğrulama yok)",
+            "plaintext": "OTA trafiği düz metin (şifreleme yok)",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}

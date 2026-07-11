@@ -95,6 +95,22 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: fuzz_ecu desteklenmez")
 
+    # ── OTA / Güncelleme Kanalı (UN R156 / R155 Kat.3) ────────────────────────
+
+    def ota_update_probe(self, target: str, scenario: str) -> Dict:
+        """OTA güncelleme kanalına bir saldırı senaryosu uygular.
+
+        scenario:
+          - 'rollback'      : eski sürüm imzalı paket gönder (R155-3.6 downgrade)
+          - 'bad_signature' : bozuk imzalı paket gönder (R155-3.4 imza atlatma)
+          - 'plaintext'     : kanalın şifreli olup olmadığını sorgula (R155-3.5)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → saldırı başarılı (koruma yok) = zafiyet
+          accepted=False → koruma mekanizması engelledi
+        """
+        raise NotImplementedError(f"{self.adapter_type}: ota_update_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:

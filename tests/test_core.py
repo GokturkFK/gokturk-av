@@ -24,6 +24,7 @@ from plugins.modules.ros2_topic_injection_plugin import ROS2TopicInjectionPlugin
 from plugins.modules.lidar_spoof_plugin import LidarSpoofPlugin
 from plugins.modules.v2x_spoof_plugin import V2XSpoofPlugin
 from plugins.modules.ecu_fuzz_plugin import ECUFuzzPlugin
+from plugins.modules.ota_attack_plugin import OTAAttackPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from docx import Document
@@ -238,6 +239,14 @@ def test_mock_fuzz_ecu_behaviour():
     assert _mock("empty").fuzz_ecu("hpc") == []
 
 
+def test_mock_ota_probe_behaviour():
+    # vulnerable -> her senaryo accepted; secure -> hicbiri; empty -> yanitsiz
+    for scn in ("rollback", "bad_signature", "plaintext"):
+        assert _mock("vulnerable").ota_update_probe("tcu", scn)["accepted"] is True
+        assert _mock("secure").ota_update_probe("tcu", scn)["accepted"] is False
+        assert _mock("empty").ota_update_probe("tcu", scn)["accepted"] is False
+
+
 # ── Plugin katmanı ───────────────────────────────────────────────────────────
 
 def test_can_replay_matrix():
@@ -374,6 +383,34 @@ def test_ecu_fuzz_mode_config_respected():
     assert f.status == "vulnerable"
 
 
+def test_ota_attack_matrix():
+    assert OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"}).status == "vulnerable"
+    assert OTAAttackPlugin(_mock("secure")).run({"id": "tcu"}).status == "not_vulnerable"
+    assert OTAAttackPlugin(_mock("empty")).run({"id": "tcu"}).status == "not_vulnerable"
+
+
+def test_ota_attack_vulnerable_picks_signature_as_primary():
+    # vulnerable modda 3 senaryo da basarili -> birincil vektor imza atlatma (R155-3.4)
+    f = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
+    assert f.r155_vector_id == "R155-3.4"
+    assert f.r155_category == 3
+    assert f.impact_safety == "high"
+    assert "3/3" in f.title
+
+
+def test_ota_attack_lists_all_three_scenarios():
+    f = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
+    assert "R155-3.4" in f.description
+    assert "R155-3.5" in f.description
+    assert "R155-3.6" in f.description
+
+
+def test_ota_attack_secure_reports_all_protected():
+    f = OTAAttackPlugin(_mock("secure")).run({"id": "tcu"})
+    assert f.status == "not_vulnerable"
+    assert "korumalar" in f.title.lower() or "aktif" in f.title.lower()
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -386,7 +423,7 @@ def test_orchestrator_discovers_all_plugins():
     classes = orch.discover_plugin_classes()
     ids = {c.module_id for c in classes}
     assert {"can-replay", "can-fuzz", "ros2-topic-enum", "ros2-topic-injection",
-            "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz"} <= ids
+            "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz", "ota-attack"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
