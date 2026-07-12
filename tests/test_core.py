@@ -802,3 +802,32 @@ def test_autonomous_shuttle_compatible_with_3d_map_and_heatmap(tmp_path):
 
     heat = build_heatmap_html(findings)
     assert heat.count('gk-heat-cell"') == 69
+
+
+# ── TARA Belge Üreticisi ───────────────────────────────────────────────────────
+
+def test_tara_generator_produces_document():
+    from scripts.generate_tara import generate
+    doc = generate()
+    assert "Tehdit Analizi ve Risk Değerlendirmesi" in doc
+    assert "ISO/SAE 21434" in doc
+    assert "autonomous-shuttle-v1" in doc
+
+
+def test_tara_lists_all_10_components():
+    from scripts.generate_tara import generate
+    import yaml
+    with open("profiles/autonomous_shuttle_v1.yaml", encoding="utf-8") as f:
+        prof = yaml.safe_load(f.read())
+    doc = generate()
+    for comp in prof["components"]:
+        assert comp["id"] in doc
+
+
+def test_tara_safety_floor_no_critical_safety_below_high():
+    # Güvenlik etkisi critical/high olan hiçbir tehdit 'Orta' veya altı olmamalı
+    from scripts.generate_tara import generate
+    doc = generate()
+    for line in doc.splitlines():
+        if line.startswith("| **Orta**") or line.startswith("| **Düşük**"):
+            assert "G:critical" not in line
