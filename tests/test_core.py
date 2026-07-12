@@ -25,6 +25,7 @@ from plugins.modules.lidar_spoof_plugin import LidarSpoofPlugin
 from plugins.modules.v2x_spoof_plugin import V2XSpoofPlugin
 from plugins.modules.ecu_fuzz_plugin import ECUFuzzPlugin
 from plugins.modules.ota_attack_plugin import OTAAttackPlugin
+from plugins.modules.adversarial_ml_plugin import AdversarialMLPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -248,6 +249,18 @@ def test_mock_ota_probe_behaviour():
         assert _mock("empty").ota_update_probe("tcu", scn)["accepted"] is False
 
 
+def test_mock_adversarial_perturbation_behaviour():
+    # vulnerable -> fooled; secure -> defended (fooled degil); empty -> yanit yok
+    v = _mock("vulnerable").inject_adversarial_perturbation("cam", sensor="camera")
+    assert v["fooled"] is True and v["defended"] is False
+    assert v["original"] != v["adversarial"]
+    s = _mock("secure").inject_adversarial_perturbation("cam", sensor="camera")
+    assert s["fooled"] is False and s["defended"] is True
+    assert s["original"] == s["adversarial"]
+    e = _mock("empty").inject_adversarial_perturbation("cam", sensor="camera")
+    assert e["fooled"] is False and e["defended"] is False
+
+
 # ── Plugin katmanı ───────────────────────────────────────────────────────────
 
 def test_can_replay_matrix():
@@ -412,6 +425,32 @@ def test_ota_attack_secure_reports_all_protected():
     assert "korumalar" in f.title.lower() or "aktif" in f.title.lower()
 
 
+def test_adversarial_ml_matrix():
+    assert AdversarialMLPlugin(_mock("vulnerable")).run({"id": "camera_processor"}).status == "vulnerable"
+    assert AdversarialMLPlugin(_mock("secure")).run({"id": "camera_processor"}).status == "not_vulnerable"
+    assert AdversarialMLPlugin(_mock("empty")).run({"id": "camera_processor"}).status == "inconclusive"
+
+
+def test_adversarial_ml_carries_taxonomy_and_critical_safety():
+    f = AdversarialMLPlugin(_mock("vulnerable")).run({"id": "camera_processor"})
+    assert f.r155_vector_id == "R155-6.7"
+    assert f.r155_category == 6
+    assert f.impact_safety == "critical"
+    assert f.is_critical_safety()
+
+
+def test_adversarial_ml_title_shows_misclassification():
+    f = AdversarialMLPlugin(_mock("vulnerable")).run({"id": "camera_processor"})
+    assert "\u2192" in f.title or "->" in f.title
+
+
+def test_adversarial_ml_lidar_sensor_config():
+    plugin = AdversarialMLPlugin(_mock("vulnerable"), config={"adv_sensor": "lidar"})
+    f = plugin.run({"id": "lidar_controller"})
+    assert f.status == "vulnerable"
+    assert "lidar" in f.title.lower()
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -424,7 +463,8 @@ def test_orchestrator_discovers_all_plugins():
     classes = orch.discover_plugin_classes()
     ids = {c.module_id for c in classes}
     assert {"can-replay", "can-fuzz", "ros2-topic-enum", "ros2-topic-injection",
-            "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz", "ota-attack"} <= ids
+            "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz", "ota-attack",
+            "adversarial-ml"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):

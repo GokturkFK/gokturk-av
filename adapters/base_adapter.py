@@ -69,6 +69,31 @@ class BaseAdapter(ABC):
     def inject_gps_spoof(self, lat: float, lon: float, alt: float = 0.0) -> bool:
         raise NotImplementedError(f"{self.adapter_type}: inject_gps_spoof desteklenmez")
 
+    def inject_adversarial_perturbation(
+        self, target: str, sensor: str = "camera", technique: str = "patch"
+    ) -> dict:
+        """Algı ML modeline karşı adversarial saldırı dener.
+
+        LiDAR/kamera spoofing'den (ham veri enjeksiyonu) farklı olarak burada
+        sensör verisi DOĞRU gelir; üzerine ince, çoğu zaman insan gözüyle fark
+        edilmeyen bir perturbation (adversarial patch / gürültü) eklenerek
+        modelin YANLIŞ sınıflandırma yapması hedeflenir.
+
+        sensor: 'camera' | 'lidar'
+        technique: 'patch' (fiziksel yama) | 'noise' (Lp-sınırlı gürültü)
+
+        Dönüş:
+          {
+            'fooled': bool,          # model yanıltıldı mı
+            'defended': bool,        # adversarial-savunma (ör. tespit/temizleme) devrede mi
+            'original': str,         # modelin perturbation'sız tahmini
+            'adversarial': str,      # perturbation sonrası (yanlış) tahmin
+          }
+        """
+        raise NotImplementedError(
+            f"{self.adapter_type}: inject_adversarial_perturbation desteklenmez"
+        )
+
     # ── V2X (Araç-Araç / Araç-Altyapı) ────────────────────────────────────────
 
     def inject_v2x_message(self, msg_type: str = "BSM", signed: bool = False) -> bool:

@@ -148,6 +148,29 @@ class MockAdapter(BaseAdapter):
     def inject_lidar_spoof(self, mode: str = "remove", target: Optional[str] = None) -> bool:
         return self.mode == "vulnerable"
 
+    def inject_adversarial_perturbation(
+        self, target: str, sensor: str = "camera", technique: str = "patch"
+    ) -> dict:
+        # Kamera örneği: "dur" işaretini "hız limiti" olarak okutma (klasik senaryo).
+        # LiDAR örneği: nesne sınıfını gizleme/değiştirme.
+        pairs = {
+            "camera": ("dur işareti", "hız limiti 80"),
+            "lidar": ("yaya", "boş yol"),
+        }
+        original, adversarial = pairs.get(sensor, ("nesne A", "nesne B"))
+        if self.mode == "empty":
+            # Model yanıt vermiyor / algı hattı erişilemez
+            return {"fooled": False, "defended": False,
+                    "original": original, "adversarial": original}
+        if self.mode == "secure":
+            # Adversarial-savunma (ör. adversarial training / girdi temizleme) devrede:
+            # perturbation tespit edilir, model doğru tahminini korur.
+            return {"fooled": False, "defended": True,
+                    "original": original, "adversarial": original}
+        # vulnerable: savunma yok, model yanıltılır
+        return {"fooled": True, "defended": False,
+                "original": original, "adversarial": adversarial}
+
     def inject_v2x_message(self, msg_type: str = "BSM", signed: bool = False) -> bool:
         # İmzalı bir mesaj her modda kabul edilir (meşru trafik).
         # İmzasız/sahte mesaj yalnızca vulnerable modda kabul edilir;
