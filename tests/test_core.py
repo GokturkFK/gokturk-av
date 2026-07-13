@@ -549,32 +549,6 @@ def test_debug_port_access_uart_config():
     assert "uart" in f.title.lower()
 
 
-def test_firmware_integrity_matrix():
-    assert FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"}).status == "vulnerable"
-    assert FirmwareIntegrityPlugin(_mock("secure")).run({"id": "hpc_compute"}).status == "not_vulnerable"
-    assert FirmwareIntegrityPlugin(_mock("empty")).run({"id": "hpc_compute"}).status == "not_vulnerable"
-
-
-def test_firmware_integrity_vulnerable_picks_malicious_replace_as_primary():
-    f = FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
-    assert f.r155_vector_id == "R155-6.1"
-    assert f.r155_category == 6
-    assert f.impact_safety == "critical"
-    assert "2/2" in f.title
-
-
-def test_firmware_integrity_lists_both_scenarios():
-    f = FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
-    assert "R155-6.1" in f.description
-    assert "R155-6.4" in f.description
-
-
-def test_firmware_integrity_secure_reports_all_protected():
-    f = FirmwareIntegrityPlugin(_mock("secure")).run({"id": "hpc_compute"})
-    assert f.status == "not_vulnerable"
-    assert "korumalar" in f.title.lower() or "aktif" in f.title.lower()
-
-
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -996,15 +970,6 @@ def test_tara_safety_floor_no_critical_safety_below_high():
     for line in doc.splitlines():
         if line.startswith("| **Orta**") or line.startswith("| **Düşük**"):
             assert "G:critical" not in line
-
-
-# ── Mock: firmware_integrity_probe davranışı ──────────────────────────────────
-
-def test_mock_firmware_integrity_probe_behaviour():
-    for scn in ("malicious_replace", "integrity_check_bypass"):
-        assert _mock("vulnerable").firmware_integrity_probe("hpc_compute", scn)["accepted"] is True
-        assert _mock("secure").firmware_integrity_probe("hpc_compute", scn)["accepted"] is False
-        assert _mock("empty").firmware_integrity_probe("hpc_compute", scn)["accepted"] is False
 
 
 # ── Firmware Integrity Plugin ──────────────────────────────────────────────────
