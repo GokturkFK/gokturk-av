@@ -31,6 +31,7 @@ from plugins.modules.diag_access_abuse_plugin import DiagnosticAccessAbusePlugin
 from plugins.modules.debug_port_access_plugin import DebugPortAccessPlugin
 from plugins.modules.firmware_integrity_plugin import FirmwareIntegrityPlugin
 from plugins.modules.remote_telematics_exploit_plugin import RemoteTelematicsExploitPlugin
+from plugins.modules.can_dos_plugin import CANDosPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -1063,3 +1064,43 @@ def test_remote_telematics_exploit_in_discovery():
     orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
     ids = {c.module_id for c in orch.discover_plugin_classes()}
     assert "remote-telematics-exploit" in ids
+
+
+# ── Mock: can_dos_probe davranışı ───────────────────────────────────────────────
+
+def test_mock_can_dos_probe_behaviour():
+    for tech in ("high_priority_flood", "error_frame_attack"):
+        assert _mock("vulnerable").can_dos_probe("gateway_ecu", tech)["succeeded"] is True
+        assert _mock("secure").can_dos_probe("gateway_ecu", tech)["succeeded"] is False
+        assert _mock("empty").can_dos_probe("gateway_ecu", tech)["succeeded"] is False
+
+
+# ── CAN DoS Plugin ───────────────────────────────────────────────────────────────
+
+def test_can_dos_matrix():
+    assert CANDosPlugin(_mock("vulnerable")).run({"id": "gateway_ecu"}).status == "vulnerable"
+    assert CANDosPlugin(_mock("secure")).run({"id": "gateway_ecu"}).status == "not_vulnerable"
+    assert CANDosPlugin(_mock("empty")).run({"id": "gateway_ecu"}).status == "not_vulnerable"
+
+
+def test_can_dos_carries_taxonomy():
+    f = CANDosPlugin(_mock("vulnerable")).run({"id": "gateway_ecu"})
+    assert f.r155_vector_id == "R155-2.4"
+    assert f.r155_category == 2
+    assert f.impact_safety == "high"
+    assert f.is_vulnerable()
+
+
+def test_can_dos_error_frame_technique_config():
+    plugin = CANDosPlugin(_mock("vulnerable"), config={"dos_technique": "error_frame_attack"})
+    f = plugin.run({"id": "gateway_ecu"})
+    assert f.status == "vulnerable"
+    assert "bus-off" in f.title.lower() or "hata çerçevesi" in f.title.lower()
+
+
+def test_can_dos_in_discovery():
+    from core.orchestrator import Orchestrator
+    from adapters.mock_adapter import MockAdapter
+    orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
+    ids = {c.module_id for c in orch.discover_plugin_classes()}
+    assert "can-dos" in ids
