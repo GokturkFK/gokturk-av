@@ -191,6 +191,25 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: debug_port_probe desteklenmez")
 
+    # ── Firmware / Yazılım Bütünlüğü (R155 Kat.6 — Veri ve Kod) ───────────────
+
+    def firmware_integrity_probe(self, target: str, scenario: str) -> Dict:
+        """ECU'nun çalışan firmware/yazılımının bütünlük doğrulamasını test eder.
+
+        scenario:
+          - 'malicious_replace'      : firmware'i kötü niyetli kodla değiştirmeyi
+                                        dener (R155-6.1 firmware değiştirme)
+          - 'integrity_check_bypass' : çalışma anında bütünlük doğrulamasını
+                                        (checksum/imza) atlatmayı dener
+                                        (R155-6.4 yazılım bütünlüğü ihlali)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → saldırı başarılı (bütünlük koruması yok) = zafiyet
+          accepted=False → koruma mekanizması (imza doğrulama/secure boot
+          zinciri) engelledi
+        """
+        raise NotImplementedError(f"{self.adapter_type}: firmware_integrity_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:
