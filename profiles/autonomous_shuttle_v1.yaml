@@ -128,3 +128,13 @@ components:
     r155_vectors: ["R155-5.1", "R155-5.4"]
     networks: []
     test_status: "not_tested"
+
+  # ── Fiziksel / Donanım ──────────────────────────────────────────────────
+  - id: "debug_ports"
+    label: "Debug Portları (JTAG/UART)"
+    category: "physical"
+    position_3d: [0.0, 0.1, 0.5]
+    attack_surfaces: ["physical", "hardware"]
+    r155_vectors: ["R155-7.4"]
+    networks: []
+    test_status: "not_tested"
