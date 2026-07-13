@@ -285,3 +285,18 @@ class MockAdapter(BaseAdapter):
         if self.mode == "empty":
             return False  # TCU uzaktan erişilemez/yanıt vermiyor
         return self.mode == "vulnerable"
+
+    def can_dos_probe(self, target: str, technique: str = "high_priority_flood") -> Dict:
+        if self.mode == "empty":
+            return {"succeeded": False, "detail": "Bus erişilemez / yanıt yok"}
+        if self.mode == "secure":
+            detail = {
+                "high_priority_flood": "Mesaj hız sınırlama düğümleri aç kalmaktan korudu",
+                "error_frame_attack": "Hata sayacı izleme, bus-off girişimini engelledi",
+            }.get(technique, "Koruma aktif")
+            return {"succeeded": False, "detail": detail}
+        detail = {
+            "high_priority_flood": "Düşük öncelikli düğümler mesaj gönderemez hale geldi (aç kalma)",
+            "error_frame_attack": "Hedef düğüm bus-off durumuna zorlandı, iletişim tamamen kesildi",
+        }.get(technique, "DoS başarılı")
+        return {"succeeded": True, "detail": detail}

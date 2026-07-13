@@ -226,6 +226,24 @@ class BaseAdapter(ABC):
             f"{self.adapter_type}: remote_telematics_exploit_probe desteklenmez"
         )
 
+    # ── CAN Bus Servis Engelleme (R155 Kat.2 — İletişim Kanalları) ────────────
+
+    def can_dos_probe(self, target: str, technique: str = "high_priority_flood") -> Dict:
+        """CAN veri yoluna servis engelleme (DoS) saldırısı dener.
+
+        technique:
+          - 'high_priority_flood' : en yüksek öncelikli (düşük arbitration ID)
+                                     çerçeveleri sürekli basarak diğer tüm
+                                     düğümleri aç bırakır
+          - 'error_frame_attack'  : hedef düğümü zorla 'bus-off' durumuna
+                                     düşürmeyi dener (hata çerçevesi enjeksiyonu)
+
+        Dönüş: {'succeeded': bool, 'detail': str}
+          succeeded=True → hedef düğüm/bus etkilendi (mesaj kaybı/bus-off) = zafiyet
+          succeeded=False → önceliklendirme/hata sayacı koruması engelledi
+        """
+        raise NotImplementedError(f"{self.adapter_type}: can_dos_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:
