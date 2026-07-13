@@ -3,25 +3,58 @@ GÖKTÜRK — OTA / Firmware Güncelleme Saldırı Modülü (UN R156 / R155 Kat.
 Taktik: OTA güncelleme kanalına üç saldırı senaryosu uygular ve her birini
 ilgili R155 vektörüne çapalar:
 
-  - rollback      → R155-3.6 (eski sürüme geri döndürme / downgrade)
   - bad_signature → R155-3.4 (imza doğrulama atlatma)
   - plaintext     → R155-3.5 (OTA kanal gizliliği ihlali)
+  - rollback      → R155-3.6 (eski sürüme geri döndürme / downgrade)
 
 Saha araştırmasında UN R156 (SUMS) ve OTA kanalı kritik bir saldırı yüzeyi
 olarak tanımlanmıştı; bu modül o boşluğu kapatır.
 
-Birincil vektör: R155-3.4 (imza atlatma — en kritik senaryo). Bulgu açıklaması
-üç senaryonun tamamının sonucunu içerir.
+Her zafiyetli senaryo, KENDİ R155 vektörüyle AYRI bir Finding olarak
+raporlanır (List[Finding]) — böylece üç vektör de kapsam sayımına doğru
+şekilde yansır; hiçbiri "birincil vektör" gölgesinde kaybolmaz.
 """
 
 from ..base_plugin import BasePlugin, Finding
 
-# Senaryo → (R155 vektörü, insan-okur etiket)
-_SCENARIOS = [
-    ("bad_signature", "R155-3.4", "İmza doğrulama atlatma"),
-    ("plaintext", "R155-3.5", "OTA kanal gizliliği (şifreleme)"),
-    ("rollback", "R155-3.6", "Downgrade / rollback koruması"),
-]
+# Senaryo → (R155 vektörü, insan-okur etiket, impact_safety, cvss, remediation)
+_SCENARIOS = {
+    "bad_signature": {
+        "vector": "R155-3.4",
+        "label": "İmza doğrulama atlatma",
+        "impact_safety": "high",
+        "cvss": 8.1,
+        "remediation": (
+            "1. Tüm OTA paketlerinde asimetrik imza doğrulamasını zorunlu kıl "
+            "(ör. Uptane çerçevesi). "
+            "2. Güncelleme meta verisini (manifest) ayrıca imzala ve doğrula."
+        ),
+    },
+    "plaintext": {
+        "vector": "R155-3.5",
+        "label": "OTA kanal gizliliği (şifreleme)",
+        "impact_safety": "medium",
+        "cvss": 5.9,
+        "remediation": (
+            "1. OTA kanalını uçtan uca TLS ile şifrele ve sunucu kimliğini doğrula. "
+            "2. Sertifika pinleme (certificate pinning) uygula."
+        ),
+    },
+    "rollback": {
+        "vector": "R155-3.6",
+        "label": "Downgrade / rollback koruması",
+        "impact_safety": "high",
+        "cvss": 7.6,
+        "remediation": (
+            "1. Monoton artan sürüm sayacı ile downgrade/rollback'i engelle. "
+            "2. Eski (zafiyetli olduğu bilinen) sürümleri kara listeye al."
+        ),
+    },
+}
+
+_COMMON_REMEDIATION = (
+    " 3. UN R156 SUMS gereksinimlerine uygun güncelleme yönetim süreci kur."
+)
 
 
 class OTAAttackPlugin(BasePlugin):
@@ -29,7 +62,7 @@ class OTAAttackPlugin(BasePlugin):
     name = "OTA / Firmware Güncelleme Saldırısı"
     surface = "ota"
     technique = "update-manipulation"
-    r155_vector_id = "R155-3.4"   # birincil (imza atlatma)
+    r155_vector_id = "R155-3.4"   # birincil (koruma aktifse tek özet Finding için)
     r155_category = 3
     avcat_id = "OTA-UPDATE-ATTACK"
     applicable_adapters = ["socketcan", "carla", "eth"]
@@ -40,17 +73,14 @@ class OTAAttackPlugin(BasePlugin):
         "Kategori 3 güncelleme güvenliğini test eder."
     )
 
-    def run(self, component_config: dict) -> Finding:
+    def run(self, component_config: dict):
         comp_id = component_config.get("id", "unknown")
 
         try:
-            results = {}
-            for scenario, vector, label in _SCENARIOS:
-                results[scenario] = {
-                    "vector": vector,
-                    "label": label,
-                    "outcome": self.adapter.ota_update_probe(comp_id, scenario),
-                }
+            outcomes = {
+                scenario: self.adapter.ota_update_probe(comp_id, scenario)
+                for scenario in _SCENARIOS
+            }
         except NotImplementedError:
             return Finding(
                 component_id=comp_id,
@@ -67,21 +97,13 @@ class OTAAttackPlugin(BasePlugin):
         except Exception as e:
             return self.make_error_finding(comp_id, e)
 
-        # Hangi senaryolar başarılı oldu (zafiyet)?
-        vulnerable_scenarios = [
-            (s, results[s]) for s, _, _ in _SCENARIOS
-            if results[s]["outcome"].get("accepted")
-        ]
+        vulnerable = {s: o for s, o in outcomes.items() if o.get("accepted")}
 
-        # Rapor satırları (her senaryo için)
-        lines = []
-        for scenario, vector, label in _SCENARIOS:
-            outcome = results[scenario]["outcome"]
-            mark = "⚠ ZAFİYETLİ" if outcome.get("accepted") else "✓ korumalı"
-            lines.append(f"  [{vector}] {label}: {mark} — {outcome.get('detail', '')}")
-        report = "\n".join(lines)
-
-        if not vulnerable_scenarios:
+        if not vulnerable:
+            lines = [
+                f"  [{meta['vector']}] {meta['label']}: ✓ korumalı — {outcomes[s].get('detail', '')}"
+                for s, meta in _SCENARIOS.items()
+            ]
             return Finding(
                 component_id=comp_id,
                 test_module_id=self.module_id,
@@ -91,54 +113,35 @@ class OTAAttackPlugin(BasePlugin):
                 title="OTA Saldırı: Güncelleme korumaları aktif",
                 description=(
                     "Üç OTA saldırı senaryosunun tamamı ilgili koruma mekanizması "
-                    f"tarafından engellendi:\n\n{report}"
+                    "tarafından engellendi:\n\n" + "\n".join(lines)
                 ),
                 attack_feasibility="high",
             )
 
-        # En az bir senaryo başarılı → birincil vektörü belirle.
-        # İmza atlatma > rollback > plaintext önceliğiyle en kritik olanı seç.
-        priority = {"bad_signature": 3, "rollback": 2, "plaintext": 1}
-        top_scenario = max(vulnerable_scenarios, key=lambda x: priority.get(x[0], 0))
-        top_vector = top_scenario[1]["vector"]
-        top_label = top_scenario[1]["label"]
-
-        # plaintext yalnız başına orta, imza/rollback yüksek safety etkisi
-        only_plaintext = all(s == "plaintext" for s, _ in vulnerable_scenarios)
-        safety = "medium" if only_plaintext else "high"
-        cvss = 5.9 if only_plaintext else 8.1
-
-        return Finding(
-            component_id=comp_id,
-            test_module_id=self.module_id,
-            r155_vector_id=top_vector,
-            r155_category=self.r155_category,
-            avcat_id=self.avcat_id,
-            status="vulnerable",
-            title=(
-                f"OTA Saldırı: {len(vulnerable_scenarios)}/3 senaryo başarılı "
-                f"(birincil: {top_vector} {top_label})"
-            ),
-            description=(
-                f"'{comp_id}' güncelleme kanalında {len(vulnerable_scenarios)} "
-                "saldırı senaryosu başarılı oldu:\n\n"
-                f"{report}\n\n"
-                "İmza doğrulama veya downgrade korumasının atlatılabilmesi, "
-                "saldırganın araca zararlı/eski firmware yüklemesine olanak tanır "
-                "— bu, tüm filoyu etkileyebilecek doğrudan bir safety ve bütünlük "
-                "riskidir."
-            ),
-            impact_safety=safety,
-            impact_operational="high",
-            impact_financial="medium",
-            attack_feasibility="medium",
-            remediation=(
-                "1. Tüm OTA paketlerinde asimetrik imza doğrulamasını zorunlu kıl "
-                "(ör. Uptane çerçevesi). "
-                "2. Monoton artan sürüm sayacı ile downgrade/rollback'i engelle. "
-                "3. OTA kanalını uçtan uca TLS ile şifrele ve sunucu kimliğini doğrula. "
-                "4. Güncelleme meta verisini (manifest) ayrıca imzala ve doğrula. "
-                "5. UN R156 SUMS gereksinimlerine uygun güncelleme yönetim süreci kur."
-            ),
-            cvss_score=cvss,
-        )
+        findings = []
+        for scenario, outcome in vulnerable.items():
+            meta = _SCENARIOS[scenario]
+            findings.append(Finding(
+                component_id=comp_id,
+                test_module_id=self.module_id,
+                r155_vector_id=meta["vector"],
+                r155_category=self.r155_category,
+                avcat_id=self.avcat_id,
+                status="vulnerable",
+                title=f"OTA Saldırı: {meta['label']} başarılı",
+                description=(
+                    f"'{comp_id}' güncelleme kanalında '{meta['label'].lower()}' "
+                    f"senaryosu başarılı oldu: {outcome.get('detail', '')}\n\n"
+                    "İmza doğrulama, kanal şifrelemesi veya downgrade korumasının "
+                    "atlatılabilmesi, saldırganın araca zararlı/eski firmware "
+                    "yüklemesine olanak tanır — bu, tüm filoyu etkileyebilecek "
+                    "doğrudan bir safety ve bütünlük riskidir."
+                ),
+                impact_safety=meta["impact_safety"],
+                impact_operational="high",
+                impact_financial="medium",
+                attack_feasibility="medium",
+                remediation=meta["remediation"] + _COMMON_REMEDIATION,
+                cvss_score=meta["cvss"],
+            ))
+        return findings

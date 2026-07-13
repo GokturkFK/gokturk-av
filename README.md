@@ -8,7 +8,7 @@
 ![UI](https://img.shields.io/badge/UI-Streamlit-red)
 ![DB](https://img.shields.io/badge/DB-SQLite-lightgrey)
 ![Framework](https://img.shields.io/badge/Framework-UN%20R155%20%2F%20ISO%2021434-orange)
-![Kapsam](https://img.shields.io/badge/R155%20Kapsam-15%2F69-green)
+![Kapsam](https://img.shields.io/badge/R155%20Kapsam-19%2F69-green)
 ![Modüller](https://img.shields.io/badge/Test%20Modülü-15-success)
 ![Sürüm](https://img.shields.io/badge/Sürüm-v0.2.0-informational)
 ![Lisans](https://img.shields.io/badge/Lisans-Özel-lightgrey)
@@ -91,10 +91,10 @@ CAN/ROS2/CARLA ortamında **değişmeden** çalışır.
 ## Kapsam Durumu
 
 <div align="center">
-<img src="docs/assets/coverage_heatmap.svg" alt="UN R155 Annex 5 kapsam ısı haritası — 15/69 vektör" width="760">
+<img src="docs/assets/coverage_heatmap.svg" alt="UN R155 Annex 5 kapsam ısı haritası — 19/69 vektör" width="760">
 </div>
 
-**15 / 69 R155 Annex 5 vektörü** çalışır bir test modülüyle kapsanıyor ve
+**19 / 69 R155 Annex 5 vektörü** çalışır bir test modülüyle kapsanıyor ve
 **7 tehdit kategorisinin tamamı** en az bir vektörle temsil ediliyor. Kalan
 vektörlerin yazılımla ilerletilebilir olanları ile gerçek donanım/lab (osiloskop,
 SDR, chip-off vb.) gerektirenlerin tam dökümü için kapsam yol haritasına bakın.

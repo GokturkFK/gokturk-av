@@ -55,19 +55,26 @@ Aşağıdaki tablo, mock (vulnerable) adaptörle çalıştırılan test modülle
 | **Kritik** | `gateway_ecu` | R155-2.2 | CAN Fuzz: Enjeksiyon mümkün (0x244), 12 anomali | G:high, O:high, F:low | high | 7.1 | Azaltma (zorunlu) — üretim öncesi giderilmeli |
 | **Yüksek** | `lidar_controller` | R155-2.9 | LiDAR Spoof: 2/2 senaryo başarılı | G:critical, O:high | low | 8.8 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `camera_processor` | R155-2.9 | LiDAR Spoof: 2/2 senaryo başarılı | G:critical, O:high | low | 8.8 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
-| **Yüksek** | `telematics_module` | R155-1.1 | Backend Sunucu: 2/2 senaryo başarılı (birincil: R155-1.1 Yetkisiz uzaktan sunucu erişimi) | G:high, O:high, F:medium, M:high | medium | 8.6 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `telematics_module` | R155-1.1 | Backend Sunucu: Yetkisiz uzaktan sunucu erişimi başarılı | G:high, O:high, F:medium, M:high | medium | 8.6 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `hpc_compute` | R155-5.7 | ROS2 Enjeksiyon: 2 kritik topic'e yazılabildi | G:critical, O:high | medium | 8.6 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `lidar_controller` | R155-5.7 | ROS2 Enjeksiyon: 2 kritik topic'e yazılabildi | G:critical, O:high | medium | 8.6 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `hpc_compute` | R155-6.1 | Firmware Bütünlüğü: Firmware değiştirme / zararlı kod başarılı | G:critical, O:high | medium | 8.4 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `hpc_compute` | R155-6.8 | ECU Fuzz: Bellek bozulması tetiklendi (hpc_compute) — 10 fault, 4 hang | G:high, O:high, F:medium | medium | 8.2 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `lidar_controller` | R155-6.7 | Adversarial ML: Model yanıltıldı (lidar/patch) — 'yaya' → 'boş yol' | G:critical, O:high | medium | 8.1 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `camera_processor` | R155-6.7 | Adversarial ML: Model yanıltıldı (camera/patch) — 'dur işareti' → 'hız limiti 80' | G:critical, O:high | medium | 8.1 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
-| **Yüksek** | `telematics_module` | R155-3.4 | OTA Saldırı: 3/3 senaryo başarılı (birincil: R155-3.4 İmza doğrulama atlatma) | G:high, O:high, F:medium | medium | 8.1 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
-| **Yüksek** | `ota_update_client` | R155-3.4 | OTA Saldırı: 3/3 senaryo başarılı (birincil: R155-3.4 İmza doğrulama atlatma) | G:high, O:high, F:medium | medium | 8.1 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `telematics_module` | R155-3.4 | OTA Saldırı: İmza doğrulama atlatma başarılı | G:high, O:high, F:medium | medium | 8.1 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `ota_update_client` | R155-3.4 | OTA Saldırı: İmza doğrulama atlatma başarılı | G:high, O:high, F:medium | medium | 8.1 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `obd2_port` | R155-5.5 | OBD-II Enum: 4 kritik UDS servisi korumasız | G:high, O:high, F:medium | medium | 7.8 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `telematics_module` | R155-3.6 | OTA Saldırı: Downgrade / rollback koruması başarılı | G:high, O:high, F:medium | medium | 7.6 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `ota_update_client` | R155-3.6 | OTA Saldırı: Downgrade / rollback koruması başarılı | G:high, O:high, F:medium | medium | 7.6 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `gnss_receiver` | R155-2.8 | GPS Spoof: Sahte konum kabul edildi (38.5012, 43.4089) | G:high, O:high, M:low | medium | 7.4 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `debug_ports` | R155-7.4 | Debug Portu Erişimi: Arayüz kilitlenmemiş (JTAG bağlantısı) | G:high, O:medium | low | 7.3 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `hpc_compute` | R155-6.4 | Firmware Bütünlüğü: Yazılım bütünlüğü ihlali başarılı | G:high, O:high | medium | 7.2 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `v2x_obu` | R155-2.7 | V2X Spoof: İmzasız BSM mesajı kabul edildi | G:high, O:high, F:low | medium | 7.1 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `telematics_module` | R155-1.5 | Backend Sunucu: Araç servisleri arka uç sunucusuna DoS başarılı | G:medium, O:high, F:medium | medium | 6.5 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `hpc_compute` | R155-5.6 | ROS2 Topic Enum: 5 kritik topic erişilebilir | G:high, O:high | medium | 6.5 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `telematics_module` | R155-3.5 | OTA Saldırı: OTA kanal gizliliği (şifreleme) başarılı | G:medium, O:high, F:medium | medium | 5.9 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Yüksek** | `ota_update_client` | R155-3.5 | OTA Saldırı: OTA kanal gizliliği (şifreleme) başarılı | G:medium, O:high, F:medium | medium | 5.9 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `gateway_ecu` | R155-2.5 | CAN Replay: Kimlik doğrulama YOK (0x3E9) | G:medium, O:high, F:low | medium | 5.7 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 | **Yüksek** | `obd2_port` | R155-4.2 | Teşhis Erişimi Suistimali: Kapsam sınırlaması yok (Güvenlik-kritik parametre yazma) | G:medium, O:medium, M:medium | high | 5.4 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
 
@@ -76,13 +83,13 @@ Aşağıdaki tablo, mock (vulnerable) adaptörle çalıştırılan test modülle
 | Risk Seviyesi | Tehdit Sayısı | Varsayılan Ele Alma |
 |---------------|---------------|---------------------|
 | Kritik | 1 | Azaltma (zorunlu) — üretim öncesi giderilmeli |
-| Yüksek | 17 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
-| **Toplam** | **18** | — |
+| Yüksek | 24 | Azaltma — sonraki sürüm hedefiyle giderilmeli |
+| **Toplam** | **25** | — |
 
 ## 5. Kapsam ve Kısıtlar
 
-- Bu TARA, mevcut **14 test modülünün** kapsadığı **14 / 69** R155 Annex 5 vektörünü yansıtır.
-- Kapsanan vektörler: `R155-1.1`, `R155-2.2`, `R155-2.5`, `R155-2.7`, `R155-2.8`, `R155-2.9`, `R155-3.4`, `R155-4.2`, `R155-5.5`, `R155-5.6`, `R155-5.7`, `R155-6.7`, `R155-6.8`, `R155-7.4`
+- Bu TARA, mevcut **15 test modülünün** kapsadığı **19 / 69** R155 Annex 5 vektörünü yansıtır.
+- Kapsanan vektörler: `R155-1.1`, `R155-1.5`, `R155-2.2`, `R155-2.5`, `R155-2.7`, `R155-2.8`, `R155-2.9`, `R155-3.4`, `R155-3.5`, `R155-3.6`, `R155-4.2`, `R155-5.5`, `R155-5.6`, `R155-5.7`, `R155-6.1`, `R155-6.4`, `R155-6.7`, `R155-6.8`, `R155-7.4`
 - Bulgular **mock (vulnerable) adaptörle** üretilmiştir; gerçek araç/tezgâh testi (vcan0, ICSim, CARLA) sonuçları farklılık gösterebilir.
 - Profildeki bazı bileşenler henüz plugin'i olmayan vektörler taşır (ör. `R155-6.7` adversarial ML) — bunlar bilinçli kapsam boşluğudur ve gelecek geliştirme önceliklerini işaret eder.
 

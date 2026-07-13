@@ -7,7 +7,7 @@ Yeni saldırı/test = bu sınıfı miras alan yeni bir modül.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 import uuid
 
 
@@ -91,8 +91,16 @@ class BasePlugin(ABC):
         self.config = config or {}
 
     @abstractmethod
-    def run(self, component_config: Dict[str, Any]) -> Finding:
-        """Test mantığını çalıştır, Finding döndür. Asla exception fırlat."""
+    def run(self, component_config: Dict[str, Any]) -> Union[Finding, List[Finding]]:
+        """Test mantığını çalıştır, Finding döndür. Asla exception fırlat.
+
+        Çoğu plugin tek bir Finding döndürür (tek vektör test edilir).
+        Birden fazla saldırı senaryosu test eden plugin'ler (ör. OTA, Backend,
+        Firmware Integrity), her zafiyetli senaryo için AYRI bir Finding
+        içeren List[Finding] döndürebilir — böylece her senaryo kendi R155
+        vektörüyle doğru şekilde kapsam sayımına yansır. Orchestrator her iki
+        dönüş tipini de (tekil ve liste) sorunsuz işler.
+        """
         pass
 
     def validate_prerequisites(self) -> Tuple[bool, str]:
