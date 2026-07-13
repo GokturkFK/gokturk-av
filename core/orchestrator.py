@@ -137,11 +137,11 @@ class Orchestrator:
             for comp in targets:
                 if ok:
                     try:
-                        finding = plugin.run(comp)
+                        result = plugin.run(comp)
                     except Exception as e:  # plugin asla exception fırlatmamalı, garanti
-                        finding = plugin.make_error_finding(comp.get("id", "unknown"), e)
+                        result = plugin.make_error_finding(comp.get("id", "unknown"), e)
                 else:
-                    finding = Finding(
+                    result = Finding(
                         component_id=comp.get("id", "unknown"),
                         test_module_id=plugin.module_id,
                         r155_vector_id=plugin.r155_vector_id,
@@ -150,9 +150,15 @@ class Orchestrator:
                         title=f"{plugin.name}: Atlandı",
                         description=reason,
                     )
-                findings.append(finding)
-                if persist and session_id:
-                    self._persist(session_id, profile_id, finding)
+                # Çoklu-senaryo plugin'leri (OTA, Backend, Firmware Integrity vb.)
+                # zafiyetli her senaryo için ayrı bir Finding döndürebilir
+                # (List[Finding]); tek-vektörlü plugin'ler tek Finding döndürür.
+                # İkisi de burada aynı şekilde işlenir (geriye dönük uyumlu).
+                result_findings = result if isinstance(result, list) else [result]
+                for finding in result_findings:
+                    findings.append(finding)
+                    if persist and session_id:
+                        self._persist(session_id, profile_id, finding)
 
         if persist and session_id:
             self.store.close_session(session_id)

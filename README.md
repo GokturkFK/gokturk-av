@@ -14,7 +14,7 @@
 ![UI](https://img.shields.io/badge/UI-Streamlit-red)
 ![DB](https://img.shields.io/badge/DB-SQLite-lightgrey)
 ![Framework](https://img.shields.io/badge/Framework-UN%20R155%20%2F%20ISO%2021434-orange)
-![Vektör Kapsamı](https://img.shields.io/badge/R155%20Kapsam-14%2F69-green)
+![Vektör Kapsamı](https://img.shields.io/badge/R155%20Kapsam-19%2F69-green)
 ![Sürüm](https://img.shields.io/badge/Sürüm-v0.2.0-informational)
 ![License](https://img.shields.io/badge/License-Private-lightgrey)
 
@@ -91,7 +91,7 @@ python scripts/generate_tara.py > docs/tara.md
 GÖKTÜRK-AV/
 ├── core/             → Çekirdek motor (finding store, orchestrator, raporlama, 3D harita, ısı haritası)
 ├── adapters/         → Araç bağlantı adaptörleri (SocketCAN, mock, CARLA — planlı)
-├── plugins/          → Test modülleri (14 modül, R155 vektörüne çapalı)
+├── plugins/          → Test modülleri (15 modül, R155 vektörüne çapalı)
 ├── taxonomy/         → UN R155 Annex 5 taksonomisi (69 vektör, 7 kategori)
 ├── profiles/         → Araç profilleri (YAML) + şema dokümantasyonu
 ├── scripts/          → TARA belge üreticisi
@@ -112,7 +112,7 @@ GÖKTÜRK-AV/
 
 ## Kapsam Durumu
 
-**14 / 69 R155 Annex 5 vektörü** kapsanıyor; **7 kategorinin tamamı** en az bir
+**19 / 69 R155 Annex 5 vektörü** kapsanıyor; **7 kategorinin tamamı** en az bir
 vektörle temsil ediliyor. Kalan vektörlerin yazılımla ilerletilebilir olanları
 ile gerçek donanım/lab (osiloskop, SDR, chip-off vb.) gerektirenlerin tam
 dökümü için:

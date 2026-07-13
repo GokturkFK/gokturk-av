@@ -1,6 +1,6 @@
 # GÖKTÜRK-AV — R155 Annex 5 Kapsam Yol Haritası
 
-> Otomatik üretilmedi, elle hazırlanmış anlık durum belgesi. Güncel toplam: **14/69** vektör kapsanmış.
+> Otomatik üretilmedi, elle hazırlanmış anlık durum belgesi. Güncel toplam: **19/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -17,7 +17,7 @@
 | R155-1.2 | Personel tarafından hak kötüye kullanımı | 🔧 Yazılımla yapılabilir |
 | R155-1.3 | Sunucuya yetkisiz internet erişimi | 🔧 Yazılımla yapılabilir |
 | R155-1.4 | Tedarik zinciri saldırısı (backend) | 🔧 Yazılımla yapılabilir |
-| R155-1.5 | Araç servisleri arka uç sunucusuna DoS | 🔧 Yazılımla yapılabilir |
+| R155-1.5 | Araç servisleri arka uç sunucusuna DoS | ✅ Bitmiş |
 
 ## Kategori 2 — İletişim kanallarına yönelik tehditler
 
@@ -45,8 +45,8 @@
 | R155-3.2 | Güncelleme kanalına DoS | 🔧 Yazılımla yapılabilir |
 | R155-3.3 | Yetkisiz yazılım yükleme | 🔧 Yazılımla yapılabilir |
 | R155-3.4 | İmza doğrulama atlatma | ✅ Bitmiş |
-| R155-3.5 | OTA kanal gizliliği ihlali | 🔧 Yazılımla yapılabilir |
-| R155-3.6 | Eski sürüme geri döndürme (downgrade) saldırısı | 🔧 Yazılımla yapılabilir |
+| R155-3.5 | OTA kanal gizliliği ihlali | ✅ Bitmiş |
+| R155-3.6 | Eski sürüme geri döndürme (downgrade) saldırısı | ✅ Bitmiş |
 | R155-3.7 | Güncelleme meta verisi / manifesto manipülasyonu | 🔧 Yazılımla yapılabilir |
 
 ## Kategori 4 — İstenmeyen insan davranışlarına yönelik tehditler
@@ -84,7 +84,7 @@
 | R155-6.1 | Firmware değiştirme / zararlı kod | 🔧 Yazılımla yapılabilir |
 | R155-6.2 | Kriptografik anahtar çalma | 🔧 Yazılımla yapılabilir |
 | R155-6.3 | Kişisel veri sızdırma | 🔧 Yazılımla yapılabilir |
-| R155-6.4 | Yazılım bütünlüğü ihlali | 🔧 Yazılımla yapılabilir |
+| R155-6.4 | Yazılım bütünlüğü ihlali | ✅ Bitmiş |
 | R155-6.5 | ECU firmware tersine mühendislik | 🔧 Yazılımla yapılabilir |
 | R155-6.6 | Güvenli depolama (HSM) aşımı | 🔩 Donanım gerekli |
 | R155-6.7 | Adversarial ML / algı manipülasyonu | ✅ Bitmiş |
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 14 |
-| 🔧 Yazılımla yapılabilir (kalan) | 41 |
+| ✅ Bitmiş | 19 |
+| 🔧 Yazılımla yapılabilir (kalan) | 36 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 14/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 19/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.

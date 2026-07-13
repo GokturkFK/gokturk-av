@@ -10,16 +10,44 @@ Saha araştırmasında vurgulandığı gibi backend, filo homojenliği nedeniyle
 özellikle kritik bir yüzeydir: tek bir backend zaafı TÜM FİLOYU aynı anda
 etkileyebilir (R155-1.4 tedarik zinciri senaryosuyla da ilişkili).
 
-Birincil vektör: R155-1.1 (yetkisiz erişim — genelde daha kritik, çünkü
-DoS'tan farklı olarak veri/kontrol sızıntısına yol açabilir).
+Her zafiyetli senaryo, KENDİ R155 vektörüyle AYRI bir Finding olarak
+raporlanır (List[Finding]) — böylece her iki vektör de kapsam sayımına
+doğru şekilde yansır.
 """
 
 from ..base_plugin import BasePlugin, Finding
 
-_SCENARIOS = [
-    ("weak_auth", "R155-1.1", "Yetkisiz uzaktan sunucu erişimi"),
-    ("dos", "R155-1.5", "Araç servisleri arka uç sunucusuna DoS"),
-]
+_SCENARIOS = {
+    "weak_auth": {
+        "vector": "R155-1.1",
+        "label": "Yetkisiz uzaktan sunucu erişimi",
+        "impact_safety": "high",
+        "impact_privacy": "high",
+        "cvss": 8.6,
+        "remediation": (
+            "1. Çok faktörlü kimlik doğrulama (MFA) ve güçlü parola politikası "
+            "zorunlu kıl; varsayılan kimlik bilgilerini asla üretimde bırakma. "
+            "2. En az yetki (least privilege) ilkesiyle personel erişimini sınırla."
+        ),
+    },
+    "dos": {
+        "vector": "R155-1.5",
+        "label": "Araç servisleri arka uç sunucusuna DoS",
+        "impact_safety": "medium",
+        "impact_privacy": "none",
+        "cvss": 6.5,
+        "remediation": (
+            "1. API/yönetim paneli için hız sınırlama (rate limiting) ve anomali "
+            "tespiti uygula. "
+            "2. Backend'i DDoS koruması olan bir CDN/WAF arkasına al."
+        ),
+    },
+}
+
+_COMMON_REMEDIATION = (
+    " 3. Düzenli sızma testi ve tedarik zinciri (üçüncü taraf bileşen) "
+    "denetimi yap (R155-1.4)."
+)
 
 
 class BackendServerPlugin(BasePlugin):
@@ -27,7 +55,7 @@ class BackendServerPlugin(BasePlugin):
     name = "Arka Uç Sunucu Güvenliği"
     surface = "backend"
     technique = "server-access"
-    r155_vector_id = "R155-1.1"   # birincil
+    r155_vector_id = "R155-1.1"   # birincil (koruma aktifse tek özet Finding için)
     r155_category = 1
     avcat_id = "BACKEND-SERVER-ACCESS"
     applicable_adapters = ["telematics", "cloud", "simulation"]
@@ -38,17 +66,14 @@ class BackendServerPlugin(BasePlugin):
         "erişim/dayanıklılık testi yapar."
     )
 
-    def run(self, component_config: dict) -> Finding:
+    def run(self, component_config: dict):
         comp_id = component_config.get("id", "unknown")
 
         try:
-            results = {}
-            for scenario, vector, label in _SCENARIOS:
-                results[scenario] = {
-                    "vector": vector,
-                    "label": label,
-                    "outcome": self.adapter.backend_server_probe(comp_id, scenario),
-                }
+            outcomes = {
+                scenario: self.adapter.backend_server_probe(comp_id, scenario)
+                for scenario in _SCENARIOS
+            }
         except NotImplementedError:
             return Finding(
                 component_id=comp_id,
@@ -65,19 +90,13 @@ class BackendServerPlugin(BasePlugin):
         except Exception as e:
             return self.make_error_finding(comp_id, e)
 
-        vulnerable_scenarios = [
-            (s, results[s]) for s, _, _ in _SCENARIOS
-            if results[s]["outcome"].get("accepted")
-        ]
+        vulnerable = {s: o for s, o in outcomes.items() if o.get("accepted")}
 
-        lines = []
-        for scenario, vector, label in _SCENARIOS:
-            outcome = results[scenario]["outcome"]
-            mark = "⚠ ZAFİYETLİ" if outcome.get("accepted") else "✓ korumalı"
-            lines.append(f"  [{vector}] {label}: {mark} — {outcome.get('detail', '')}")
-        report = "\n".join(lines)
-
-        if not vulnerable_scenarios:
+        if not vulnerable:
+            lines = [
+                f"  [{meta['vector']}] {meta['label']}: ✓ korumalı — {outcomes[s].get('detail', '')}"
+                for s, meta in _SCENARIOS.items()
+            ]
             return Finding(
                 component_id=comp_id,
                 test_module_id=self.module_id,
@@ -87,56 +106,36 @@ class BackendServerPlugin(BasePlugin):
                 title="Backend Sunucu: Erişim/dayanıklılık korumaları aktif",
                 description=(
                     "İki backend saldırı senaryosunun tamamı ilgili koruma "
-                    f"mekanizması tarafından engellendi:\n\n{report}"
+                    "mekanizması tarafından engellendi:\n\n" + "\n".join(lines)
                 ),
                 attack_feasibility="high",
             )
 
-        priority = {"weak_auth": 2, "dos": 1}
-        top_scenario = max(vulnerable_scenarios, key=lambda x: priority.get(x[0], 0))
-        top_vector = top_scenario[1]["vector"]
-        top_label = top_scenario[1]["label"]
-
-        only_dos = all(s == "dos" for s, _ in vulnerable_scenarios)
-        safety = "medium" if only_dos else "high"
-        privacy = "high" if not only_dos else "none"
-        cvss = 6.5 if only_dos else 8.6
-
-        return Finding(
-            component_id=comp_id,
-            test_module_id=self.module_id,
-            r155_vector_id=top_vector,
-            r155_category=self.r155_category,
-            avcat_id=self.avcat_id,
-            status="vulnerable",
-            title=(
-                f"Backend Sunucu: {len(vulnerable_scenarios)}/2 senaryo başarılı "
-                f"(birincil: {top_vector} {top_label})"
-            ),
-            description=(
-                f"'{comp_id}' üzerinden erişilen backend sunucusunda "
-                f"{len(vulnerable_scenarios)} saldırı senaryosu başarılı oldu:\n\n"
-                f"{report}\n\n"
-                "Filo homojenliği nedeniyle backend zaafları özellikle kritiktir: "
-                "tek bir sunucu güvenlik açığı, o backend'e bağlı TÜM araçları "
-                "aynı anda etkileyebilir (uzaktan komut, konum verisi, filo "
-                "yönetim kontrolü dahil)."
-            ),
-            impact_safety=safety,
-            impact_operational="high",
-            impact_financial="medium",
-            impact_privacy=privacy,
-            attack_feasibility="medium",
-            remediation=(
-                "1. Çok faktörlü kimlik doğrulama (MFA) ve güçlü parola politikası "
-                "zorunlu kıl; varsayılan kimlik bilgilerini asla üretimde bırakma. "
-                "2. API/yönetim paneli için hız sınırlama (rate limiting) ve "
-                "anomali tespiti uygula. "
-                "3. En az yetki (least privilege) ilkesiyle personel erişimini "
-                "sınırla (R155-1.2 ile ilişkili). "
-                "4. Backend'i DDoS koruması olan bir CDN/WAF arkasına al. "
-                "5. Düzenli sızma testi ve tedarik zinciri (üçüncü taraf "
-                "bileşen) denetimi yap (R155-1.4)."
-            ),
-            cvss_score=cvss,
-        )
+        findings = []
+        for scenario, outcome in vulnerable.items():
+            meta = _SCENARIOS[scenario]
+            findings.append(Finding(
+                component_id=comp_id,
+                test_module_id=self.module_id,
+                r155_vector_id=meta["vector"],
+                r155_category=self.r155_category,
+                avcat_id=self.avcat_id,
+                status="vulnerable",
+                title=f"Backend Sunucu: {meta['label']} başarılı",
+                description=(
+                    f"'{comp_id}' üzerinden erişilen backend sunucusunda "
+                    f"'{meta['label'].lower()}' senaryosu başarılı oldu: "
+                    f"{outcome.get('detail', '')}\n\n"
+                    "Filo homojenliği nedeniyle backend zaafları özellikle "
+                    "kritiktir: tek bir sunucu güvenlik açığı, o backend'e "
+                    "bağlı TÜM araçları aynı anda etkileyebilir."
+                ),
+                impact_safety=meta["impact_safety"],
+                impact_operational="high",
+                impact_financial="medium",
+                impact_privacy=meta["impact_privacy"],
+                attack_feasibility="medium",
+                remediation=meta["remediation"] + _COMMON_REMEDIATION,
+                cvss_score=meta["cvss"],
+            ))
+        return findings

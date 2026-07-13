@@ -29,6 +29,7 @@ from plugins.modules.adversarial_ml_plugin import AdversarialMLPlugin
 from plugins.modules.backend_server_plugin import BackendServerPlugin
 from plugins.modules.diag_access_abuse_plugin import DiagnosticAccessAbusePlugin
 from plugins.modules.debug_port_access_plugin import DebugPortAccessPlugin
+from plugins.modules.firmware_integrity_plugin import FirmwareIntegrityPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -420,25 +421,24 @@ def test_ecu_fuzz_mode_config_respected():
 
 
 def test_ota_attack_matrix():
-    assert OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"}).status == "vulnerable"
+    vuln = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
     assert OTAAttackPlugin(_mock("secure")).run({"id": "tcu"}).status == "not_vulnerable"
     assert OTAAttackPlugin(_mock("empty")).run({"id": "tcu"}).status == "not_vulnerable"
 
 
-def test_ota_attack_vulnerable_picks_signature_as_primary():
-    # vulnerable modda 3 senaryo da basarili -> birincil vektor imza atlatma (R155-3.4)
-    f = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
-    assert f.r155_vector_id == "R155-3.4"
-    assert f.r155_category == 3
-    assert f.impact_safety == "high"
-    assert "3/3" in f.title
+def test_ota_attack_vulnerable_returns_three_distinct_vectors():
+    findings = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-3.4", "R155-3.5", "R155-3.6"]
+    assert all(f.r155_category == 3 for f in findings)
+    sig_finding = next(f for f in findings if f.r155_vector_id == "R155-3.4")
+    assert sig_finding.impact_safety == "high"
 
 
 def test_ota_attack_lists_all_three_scenarios():
-    f = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
-    assert "R155-3.4" in f.description
-    assert "R155-3.5" in f.description
-    assert "R155-3.6" in f.description
+    findings = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
+    assert len(findings) == 3
 
 
 def test_ota_attack_secure_reports_all_protected():
@@ -474,24 +474,25 @@ def test_adversarial_ml_lidar_sensor_config():
 
 
 def test_backend_server_matrix():
-    assert BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"}).status == "vulnerable"
+    vuln = BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
     assert BackendServerPlugin(_mock("secure")).run({"id": "telematics_module"}).status == "not_vulnerable"
     assert BackendServerPlugin(_mock("empty")).run({"id": "telematics_module"}).status == "not_vulnerable"
 
 
-def test_backend_server_vulnerable_picks_weak_auth_as_primary():
-    f = BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
-    assert f.r155_vector_id == "R155-1.1"
-    assert f.r155_category == 1
-    assert f.impact_safety == "high"
-    assert f.impact_privacy == "high"
-    assert "2/2" in f.title
+def test_backend_server_vulnerable_returns_two_distinct_vectors():
+    findings = BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-1.1", "R155-1.5"]
+    assert all(f.r155_category == 1 for f in findings)
+    auth_finding = next(f for f in findings if f.r155_vector_id == "R155-1.1")
+    assert auth_finding.impact_safety == "high"
+    assert auth_finding.impact_privacy == "high"
 
 
 def test_backend_server_lists_both_scenarios():
-    f = BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
-    assert "R155-1.1" in f.description
-    assert "R155-1.5" in f.description
+    findings = BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
+    assert len(findings) == 2
 
 
 def test_backend_server_secure_reports_all_protected():
@@ -962,3 +963,49 @@ def test_tara_safety_floor_no_critical_safety_below_high():
     for line in doc.splitlines():
         if line.startswith("| **Orta**") or line.startswith("| **Düşük**"):
             assert "G:critical" not in line
+
+
+# ── Mock: firmware_integrity_probe davranışı ──────────────────────────────────
+
+def test_mock_firmware_integrity_probe_behaviour():
+    for scn in ("malicious_replace", "integrity_check_bypass"):
+        assert _mock("vulnerable").firmware_integrity_probe("hpc_compute", scn)["accepted"] is True
+        assert _mock("secure").firmware_integrity_probe("hpc_compute", scn)["accepted"] is False
+        assert _mock("empty").firmware_integrity_probe("hpc_compute", scn)["accepted"] is False
+
+
+# ── Firmware Integrity Plugin ──────────────────────────────────────────────────
+
+def test_firmware_integrity_matrix():
+    vuln = FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
+    assert FirmwareIntegrityPlugin(_mock("secure")).run({"id": "hpc_compute"}).status == "not_vulnerable"
+    assert FirmwareIntegrityPlugin(_mock("empty")).run({"id": "hpc_compute"}).status == "not_vulnerable"
+
+
+def test_firmware_integrity_vulnerable_returns_two_distinct_vectors():
+    findings = FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-6.1", "R155-6.4"]
+    assert all(f.r155_category == 6 for f in findings)
+    replace_finding = next(f for f in findings if f.r155_vector_id == "R155-6.1")
+    assert replace_finding.impact_safety == "critical"
+
+
+def test_firmware_integrity_lists_both_scenarios():
+    findings = FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    assert len(findings) == 2
+
+
+def test_firmware_integrity_secure_reports_all_protected():
+    f = FirmwareIntegrityPlugin(_mock("secure")).run({"id": "hpc_compute"})
+    assert f.status == "not_vulnerable"
+    assert "korumalar" in f.title.lower() or "aktif" in f.title.lower()
+
+
+def test_firmware_integrity_in_discovery():
+    from core.orchestrator import Orchestrator
+    from adapters.mock_adapter import MockAdapter
+    orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
+    ids = {c.module_id for c in orch.discover_plugin_classes()}
+    assert "firmware-integrity" in ids
