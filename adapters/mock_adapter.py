@@ -300,3 +300,11 @@ class MockAdapter(BaseAdapter):
             "error_frame_attack": "Hedef düğüm bus-off durumuna zorlandı, iletişim tamamen kesildi",
         }.get(technique, "DoS başarılı")
         return {"succeeded": True, "detail": detail}
+
+    def ivi_pivot_probe(self, target: str) -> bool:
+        # secure modda gateway ECU, IVI ile kritik CAN ağı arasında sıkı
+        # filtreleme/ayrıştırma uygular — pivot engellenir.
+        # vulnerable modda yeterli ağ ayrıştırması yok, pivot başarılı.
+        if self.mode == "empty":
+            return False  # IVI erişilemez / yanıt yok
+        return self.mode == "vulnerable"
