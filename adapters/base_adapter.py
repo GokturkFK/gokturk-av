@@ -136,6 +136,24 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: ota_update_probe desteklenmez")
 
+    # ── Arka Uç / Filo Yönetim Sunucusu (R155 Kat.1) ──────────────────────────
+
+    def backend_server_probe(self, target: str, scenario: str) -> Dict:
+        """Araç servisleri arka uç (backend/filo yönetim) sunucusuna bir
+        erişim/dayanıklılık saldırı senaryosu uygular.
+
+        scenario:
+          - 'weak_auth' : zayıf/varsayılan kimlik bilgileriyle erişim dener
+                          (R155-1.1 yetkisiz uzaktan sunucu erişimi)
+          - 'dos'       : sunucuyu yüksek istek hacmiyle yorar
+                          (R155-1.5 backend DoS)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → saldırı başarılı (koruma yok) = zafiyet
+          accepted=False → koruma mekanizması engelledi
+        """
+        raise NotImplementedError(f"{self.adapter_type}: backend_server_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:

@@ -225,3 +225,21 @@ class MockAdapter(BaseAdapter):
             "plaintext": "OTA trafiği düz metin (şifreleme yok)",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def backend_server_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda kimlik doğrulama sıkı + hız sınırlama (rate limiting) aktif.
+        # vulnerable modda ikisi de yok. empty modda sunucu erişilemez.
+        if self.mode == "empty":
+            return {"accepted": False, "detail": "Backend sunucusu erişilemez"}
+        if self.mode == "secure":
+            detail = {
+                "weak_auth": "Çok faktörlü kimlik doğrulama zayıf/varsayılan girişi reddetti",
+                "dos": "Hız sınırlama (rate limiting) yüksek istek hacmini engelledi",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "weak_auth": "Varsayılan/zayıf kimlik bilgileriyle yönetim paneline erişildi",
+            "dos": "Sunucu yüksek istek hacmi altında yanıt vermemeye başladı",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}
