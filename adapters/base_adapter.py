@@ -210,6 +210,22 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: firmware_integrity_probe desteklenmez")
 
+    # ── Uzaktan Telematik Exploit Erişimi (R155 Kat.5 — Dış Bağlanabilirlik) ──
+
+    def remote_telematics_exploit_probe(self, target: str) -> bool:
+        """Telematik/TCU birimine uzaktan erişilebilir servisleri hedefleyen
+        bilinen bir zafiyet sınıfını istismar etmeyi dener.
+
+        2015 Jeep Cherokee vakası bu vektörün arketipidir: TCU üzerinden
+        uzaktan erişim sağlanıp iç araç ağına pivot yapılmıştır.
+
+        Dönüş: True → uzaktan exploit başarılı (TCU'ya kod yürütme/erişim
+        sağlandı) = zafiyet. False → yama/sertleştirme (hardening) engelledi.
+        """
+        raise NotImplementedError(
+            f"{self.adapter_type}: remote_telematics_exploit_probe desteklenmez"
+        )
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:

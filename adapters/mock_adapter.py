@@ -277,3 +277,11 @@ class MockAdapter(BaseAdapter):
             "integrity_check_bypass": "Çalışan yazılım hiçbir checksum/imza doğrulaması olmadan yürütüldü",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def remote_telematics_exploit_probe(self, target: str) -> bool:
+        # secure modda TCU sertleştirilmiş (yamalı işletim sistemi, kapalı
+        # debug servisleri, güçlü kimlik doğrulama) — uzaktan exploit başarısız.
+        # vulnerable modda TCU eski/yamasız yazılım çalıştırıyor, exploit başarılı.
+        if self.mode == "empty":
+            return False  # TCU uzaktan erişilemez/yanıt vermiyor
+        return self.mode == "vulnerable"

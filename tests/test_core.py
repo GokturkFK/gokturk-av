@@ -30,6 +30,7 @@ from plugins.modules.backend_server_plugin import BackendServerPlugin
 from plugins.modules.diag_access_abuse_plugin import DiagnosticAccessAbusePlugin
 from plugins.modules.debug_port_access_plugin import DebugPortAccessPlugin
 from plugins.modules.firmware_integrity_plugin import FirmwareIntegrityPlugin
+from plugins.modules.remote_telematics_exploit_plugin import RemoteTelematicsExploitPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -1007,3 +1008,58 @@ def test_firmware_integrity_in_discovery():
     orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
     ids = {c.module_id for c in orch.discover_plugin_classes()}
     assert "firmware-integrity" in ids
+
+
+# ── Mock: remote_telematics_exploit_probe davranışı ────────────────────────────
+
+def test_mock_remote_telematics_exploit_probe_behaviour():
+    assert _mock("vulnerable").remote_telematics_exploit_probe("telematics_module") is True
+    assert _mock("secure").remote_telematics_exploit_probe("telematics_module") is False
+    assert _mock("empty").remote_telematics_exploit_probe("telematics_module") is False
+
+
+# ── Remote Telematics Exploit Plugin ────────────────────────────────────────────
+
+def test_remote_telematics_exploit_matrix():
+    assert RemoteTelematicsExploitPlugin(_mock("vulnerable")).run({"id": "telematics_module"}).status == "vulnerable"
+    assert RemoteTelematicsExploitPlugin(_mock("secure")).run({"id": "telematics_module"}).status == "not_vulnerable"
+    assert RemoteTelematicsExploitPlugin(_mock("empty")).run({"id": "telematics_module"}).status == "not_vulnerable"
+
+
+def test_remote_telematics_exploit_carries_taxonomy():
+    f = RemoteTelematicsExploitPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
+    assert f.r155_vector_id == "R155-5.13"
+    assert f.r155_category == 5
+    assert f.impact_safety == "critical"
+    assert f.is_vulnerable()
+    assert f.is_critical_safety()
+
+
+def test_remote_telematics_exploit_inconclusive_when_adapter_unsupported():
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = RemoteTelematicsExploitPlugin(bare).run({"id": "telematics_module"})
+    assert f.status == "inconclusive"
+
+
+def test_remote_telematics_exploit_in_discovery():
+    from core.orchestrator import Orchestrator
+    from adapters.mock_adapter import MockAdapter
+    orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
+    ids = {c.module_id for c in orch.discover_plugin_classes()}
+    assert "remote-telematics-exploit" in ids
