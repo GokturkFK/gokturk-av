@@ -9,7 +9,7 @@ yeni bir araç = bu şemaya uygun yeni bir YAML dosyası; koda dokunulmaz.
 | Dosya | Amaç |
 |---|---|
 | `shuttle_example.yaml` | Faz 1 simülasyon profili (CARLA + ROS2 FastDDS) |
-| `autonomous_shuttle_v1.yaml` | Gerçekçi Level 4 otonom servis aracı referans profili — 10 bileşenlik tam kataloğu (backend, algı, teşhis, güncelleme, yolcu bağlanabilirliği) |
+| `autonomous_shuttle_v1.yaml` | Gerçekçi Level 4 otonom servis aracı referans profili — 11 bileşenlik tam kataloğu (backend, algı, teşhis, güncelleme, yolcu bağlanabilirliği, fiziksel/donanım) |
 
 ## Kök seviye alanlar
 

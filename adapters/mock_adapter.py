@@ -251,3 +251,11 @@ class MockAdapter(BaseAdapter):
         if self.mode == "empty":
             return False  # teşhis oturumu hiç açılamadı
         return self.mode == "vulnerable"
+
+    def debug_port_probe(self, target: str, action: str = "jtag_connect") -> bool:
+        # secure modda debug arayüzü üretimde kilitli/eritilmiş (fused) —
+        # fiziksel erişim olsa bile bağlantı reddedilir.
+        # vulnerable modda arayüz açık/kilitlenmemiş (yaygın geliştirme hatası).
+        if self.mode == "empty":
+            return False  # arayüz fiziksel olarak mevcut değil/erişilemez
+        return self.mode == "vulnerable"

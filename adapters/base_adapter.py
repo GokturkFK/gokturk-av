@@ -173,6 +173,24 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: diagnostic_scope_probe desteklenmez")
 
+    # ── Fiziksel Debug Portu Erişimi (R155 Kat.7 — Fiziksel Zafiyetler) ───────
+
+    def debug_port_probe(self, target: str, action: str = "jtag_connect") -> bool:
+        """Bir donanım debug arayüzüne (JTAG/UART) fiziksel erişim dener.
+
+        OBD-II teşhis portundan (R155-5.5) farklı olarak bu, PCB üzerindeki
+        ayrı bir düşük seviye debug arayüzünü hedefler — bellek dökümü,
+        bootloader kesintisi veya doğrudan bellek/flash erişimi sağlayabilir.
+
+        action: 'jtag_connect' (JTAG üzerinden bağlantı) |
+                'uart_console' (UART seri konsola erişim)
+
+        Dönüş: True → debug arayüzü kilitlenmemiş/etkin, erişim sağlandı
+        (üretimde devre dışı bırakılmamış = zafiyet). False → arayüz
+        kilitli/eritilmiş (fused) veya erişilemez.
+        """
+        raise NotImplementedError(f"{self.adapter_type}: debug_port_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:
