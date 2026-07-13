@@ -259,3 +259,21 @@ class MockAdapter(BaseAdapter):
         if self.mode == "empty":
             return False  # arayüz fiziksel olarak mevcut değil/erişilemez
         return self.mode == "vulnerable"
+
+    def firmware_integrity_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda secure boot zinciri + çalışma anı bütünlük doğrulaması
+        # aktif. vulnerable modda ikisi de yok/atlatılabilir.
+        if self.mode == "empty":
+            return {"accepted": False, "detail": "ECU yanıt vermiyor"}
+        if self.mode == "secure":
+            detail = {
+                "malicious_replace": "Secure boot imza doğrulaması kötü niyetli firmware'i reddetti",
+                "integrity_check_bypass": "Çalışma anı bütünlük denetimi (runtime attestation) tutarsızlığı tespit etti",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "malicious_replace": "İmzasız/kötü niyetli firmware imajı kabul edildi",
+            "integrity_check_bypass": "Çalışan yazılım hiçbir checksum/imza doğrulaması olmadan yürütüldü",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}
