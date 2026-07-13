@@ -154,6 +154,25 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: backend_server_probe desteklenmez")
 
+    # ── Teşhis Erişimi Suistimali (R155 Kat.4 — İnsan Davranışları) ───────────
+
+    def diagnostic_scope_probe(self, target: str, action: str = "write_critical_param") -> bool:
+        """Zaten AÇIK/MEŞRU bir teşhis oturumu (ör. yetkili tamirci) kapsamı
+        aşan bir işlem denediğinde, kapsam sınırlaması / ek yetkilendirme /
+        denetim (audit) kontrolünün devrede olup olmadığını sınar.
+
+        Bu, obd2-enum'un (R155-5.5) test ettiği "kimlik doğrulamasız dış
+        erişim"den FARKLIDIR: burada oturum zaten meşru şekilde açık; sınanan
+        şey içeriden/yetkili kullanıcının kapsam suistimalidir (R155-4.2).
+
+        action: 'write_critical_param' (güvenlik-kritik parametre yazma) |
+                'bulk_extract' (oturum kapsamının çok üzerinde veri çekme)
+
+        Dönüş: True → işlem ek yetkilendirme/denetim olmadan kabul edildi
+        (kapsam sınırlaması yok = zafiyet). False → engellendi/denetlendi.
+        """
+        raise NotImplementedError(f"{self.adapter_type}: diagnostic_scope_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:

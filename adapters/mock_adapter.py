@@ -243,3 +243,11 @@ class MockAdapter(BaseAdapter):
             "dos": "Sunucu yüksek istek hacmi altında yanıt vermemeye başladı",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def diagnostic_scope_probe(self, target: str, action: str = "write_critical_param") -> bool:
+        # secure modda kapsam sınırlaması + ek yetkilendirme/denetim devrede:
+        # oturum meşru olsa da kapsam dışı işlem reddedilir.
+        # vulnerable modda açık oturum sınırsız yetki taşır (klasik senaryo).
+        if self.mode == "empty":
+            return False  # teşhis oturumu hiç açılamadı
+        return self.mode == "vulnerable"
