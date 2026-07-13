@@ -88,7 +88,7 @@ components:
     category: "diagnostic"
     position_3d: [1.2, 0.0, -0.6]
     attack_surfaces: ["diagnostic", "physical"]
-    r155_vectors: ["R155-5.5", "R155-7.1"]
+    r155_vectors: ["R155-5.5", "R155-7.1", "R155-4.2"]
     networks: ["vcan0"]
     test_status: "not_tested"
 

@@ -27,6 +27,7 @@ from plugins.modules.ecu_fuzz_plugin import ECUFuzzPlugin
 from plugins.modules.ota_attack_plugin import OTAAttackPlugin
 from plugins.modules.adversarial_ml_plugin import AdversarialMLPlugin
 from plugins.modules.backend_server_plugin import BackendServerPlugin
+from plugins.modules.diag_access_abuse_plugin import DiagnosticAccessAbusePlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -269,6 +270,12 @@ def test_mock_backend_server_probe_behaviour():
         assert _mock("empty").backend_server_probe("telematics_module", scn)["accepted"] is False
 
 
+def test_mock_diagnostic_scope_probe_behaviour():
+    assert _mock("vulnerable").diagnostic_scope_probe("obd2_port") is True
+    assert _mock("secure").diagnostic_scope_probe("obd2_port") is False
+    assert _mock("empty").diagnostic_scope_probe("obd2_port") is False
+
+
 # ── Plugin katmanı ───────────────────────────────────────────────────────────
 
 def test_can_replay_matrix():
@@ -486,6 +493,26 @@ def test_backend_server_secure_reports_all_protected():
     assert "korumalar" in f.title.lower() or "aktif" in f.title.lower()
 
 
+def test_diag_access_abuse_matrix():
+    assert DiagnosticAccessAbusePlugin(_mock("vulnerable")).run({"id": "obd2_port"}).status == "vulnerable"
+    assert DiagnosticAccessAbusePlugin(_mock("secure")).run({"id": "obd2_port"}).status == "not_vulnerable"
+    assert DiagnosticAccessAbusePlugin(_mock("empty")).run({"id": "obd2_port"}).status == "not_vulnerable"
+
+
+def test_diag_access_abuse_carries_taxonomy():
+    f = DiagnosticAccessAbusePlugin(_mock("vulnerable")).run({"id": "obd2_port"})
+    assert f.r155_vector_id == "R155-4.2"
+    assert f.r155_category == 4
+    assert f.is_vulnerable()
+
+
+def test_diag_access_abuse_bulk_extract_config():
+    plugin = DiagnosticAccessAbusePlugin(_mock("vulnerable"), config={"diag_action": "bulk_extract"})
+    f = plugin.run({"id": "obd2_port"})
+    assert f.status == "vulnerable"
+    assert "veri cekme" in f.title.lower() or "veri çekme" in f.title.lower()
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -499,7 +526,7 @@ def test_orchestrator_discovers_all_plugins():
     ids = {c.module_id for c in classes}
     assert {"can-replay", "can-fuzz", "ros2-topic-enum", "ros2-topic-injection",
             "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz", "ota-attack",
-            "adversarial-ml", "backend-server"} <= ids
+            "adversarial-ml", "backend-server", "diag-access-abuse"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
