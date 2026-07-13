@@ -244,6 +244,22 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: can_dos_probe desteklenmez")
 
+    # ── IVI / Infotainment Üzerinden Pivot (R155 Kat.5 — Dış Bağlanabilirlik) ──
+
+    def ivi_pivot_probe(self, target: str) -> bool:
+        """IVI/infotainment sistemi ele geçirildikten sonra araç içi kritik
+        ağlara (CAN/gateway) pivot yapılıp yapılamadığını test eder.
+
+        Klasik senaryo: yolcu WiFi/infotainment üzerinden IVI'ye erişim
+        sağlanır, ardından IVI ile gateway/CAN arasında yeterli ağ
+        ayrıştırması (segmentation) yoksa saldırgan kritik ağlara sızar.
+
+        Dönüş: True → pivot başarılı (IVI ile kritik ağ arasında izolasyon
+        yok) = zafiyet. False → ağ ayrıştırması/gateway filtrelemesi pivotu
+        engelledi.
+        """
+        raise NotImplementedError(f"{self.adapter_type}: ivi_pivot_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:

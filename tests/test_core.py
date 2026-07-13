@@ -32,6 +32,7 @@ from plugins.modules.debug_port_access_plugin import DebugPortAccessPlugin
 from plugins.modules.firmware_integrity_plugin import FirmwareIntegrityPlugin
 from plugins.modules.remote_telematics_exploit_plugin import RemoteTelematicsExploitPlugin
 from plugins.modules.can_dos_plugin import CANDosPlugin
+from plugins.modules.ivi_pivot_plugin import IVIPivotPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -1104,3 +1105,35 @@ def test_can_dos_in_discovery():
     orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
     ids = {c.module_id for c in orch.discover_plugin_classes()}
     assert "can-dos" in ids
+
+
+# ── Mock: ivi_pivot_probe davranışı ─────────────────────────────────────────────
+
+def test_mock_ivi_pivot_probe_behaviour():
+    assert _mock("vulnerable").ivi_pivot_probe("gateway_ecu") is True
+    assert _mock("secure").ivi_pivot_probe("gateway_ecu") is False
+    assert _mock("empty").ivi_pivot_probe("gateway_ecu") is False
+
+
+# ── IVI Pivot Plugin ─────────────────────────────────────────────────────────────
+
+def test_ivi_pivot_matrix():
+    assert IVIPivotPlugin(_mock("vulnerable")).run({"id": "gateway_ecu"}).status == "vulnerable"
+    assert IVIPivotPlugin(_mock("secure")).run({"id": "gateway_ecu"}).status == "not_vulnerable"
+    assert IVIPivotPlugin(_mock("empty")).run({"id": "gateway_ecu"}).status == "not_vulnerable"
+
+
+def test_ivi_pivot_carries_taxonomy():
+    f = IVIPivotPlugin(_mock("vulnerable")).run({"id": "gateway_ecu"})
+    assert f.r155_vector_id == "R155-5.4"
+    assert f.r155_category == 5
+    assert f.impact_safety == "high"
+    assert f.is_vulnerable()
+
+
+def test_ivi_pivot_in_discovery():
+    from core.orchestrator import Orchestrator
+    from adapters.mock_adapter import MockAdapter
+    orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
+    ids = {c.module_id for c in orch.discover_plugin_classes()}
+    assert "ivi-pivot" in ids
