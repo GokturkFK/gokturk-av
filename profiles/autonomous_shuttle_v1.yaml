@@ -39,8 +39,8 @@ components:
     label: "Gateway ECU"
     category: "network"
     position_3d: [0.2, 0.3, -0.3]
-    attack_surfaces: ["in-vehicle-network", "firewall-bypass"]
-    r155_vectors: ["R155-2.2", "R155-2.4", "R155-2.5", "R155-5.4"]
+    attack_surfaces: ["in-vehicle-network", "firewall-bypass", "communication"]
+    r155_vectors: ["R155-2.2", "R155-2.3", "R155-2.4", "R155-2.5", "R155-2.6", "R155-5.4"]
     networks: ["vcan0"]
     test_status: "not_tested"
 

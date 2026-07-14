@@ -1,6 +1,6 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **38/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **40/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -25,10 +25,10 @@
 |---|---|---|
 | R155-2.1 | Mesaj sahteciliği / spoofing | ✅ Bitmiş |
 | R155-2.2 | Mesaj enjeksiyonu (CAN, Ethernet) | ✅ Bitmiş |
-| R155-2.3 | Bilgi dinleme / sniffing | 🔧 Yazılımla yapılabilir |
+| R155-2.3 | Bilgi dinleme / sniffing | ✅ Bitmiş |
 | R155-2.4 | Servis engelleme / DoS | ✅ Bitmiş |
 | R155-2.5 | Replay saldırısı | ✅ Bitmiş |
-| R155-2.6 | Ortadaki adam / MitM | 🔧 Yazılımla yapılabilir |
+| R155-2.6 | Ortadaki adam / MitM | ✅ Bitmiş |
 | R155-2.7 | V2X mesaj manipülasyonu | ✅ Bitmiş |
 | R155-2.8 | GPS/GNSS spoofing | ✅ Bitmiş |
 | R155-2.9 | Sensör (LiDAR/kamera/radar) spoofing | ✅ Bitmiş |
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 38 |
-| 🔧 Yazılımla yapılabilir (kalan) | 17 |
+| ✅ Bitmiş | 40 |
+| 🔧 Yazılımla yapılabilir (kalan) | 15 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 38/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 40/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.

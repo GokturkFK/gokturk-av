@@ -427,3 +427,26 @@ class MockAdapter(BaseAdapter):
             "local_storage_unauthorized_access": "Yerel depoda şifrelenmemiş yolculuk geçmişi/eşleştirilmiş cihaz verisi doğrudan okunabildi",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def comm_interception_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda hassas sinyaller payload seviyesinde şifreli/MAC'li ve
+        # segmentler arası karşılıklı TLS/kimlik doğrulama aktif. vulnerable
+        # modda ikisi de yok. empty modda kanal erişilemez (korumalı sayılır).
+        if self.mode == "empty":
+            detail = {
+                "can_sniffing": "Ağ trafiği yakalanamıyor",
+                "gateway_mitm": "Gateway erişilemez/yanıt yok",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "can_sniffing": "Hassas sinyaller payload seviyesinde şifreli/MAC'li; dinleme anlamlı veri vermedi",
+                "gateway_mitm": "Karşılıklı TLS/kimlik doğrulama, araya girme girişimini reddetti",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "can_sniffing": "Hassas sinyaller düz metin olarak dinlenip tam çözüldü",
+            "gateway_mitm": "Saldırgan iki segment arasına yerleşip trafiği okuyup değiştirebildi",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}

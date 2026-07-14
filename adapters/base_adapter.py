@@ -451,6 +451,39 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: personal_data_probe desteklenmez")
 
+    # ── İletişim Kanalı Dinleme/Araya Girme (R155 Kat.2 — İletişim Kanalları) ─
+
+    def comm_interception_probe(self, target: str, scenario: str) -> Dict:
+        """Gateway/iletişim kanalı üzerinden PASİF dinleme ile AKTİF araya
+        girmeyi (MitM) iki ayrı yetenek olarak test eder.
+
+        scenario:
+          - 'can_sniffing'         : ağ üzerinde salt-okunur konumdaki bir
+                                      saldırganın, hassas sinyalleri (payload
+                                      seviyesinde ek şifreleme/MAC olmadan)
+                                      pasif olarak dinleyip tam çözebildiğini
+                                      sınar (R155-2.3 bilgi dinleme/sniffing —
+                                      yalnızca GİZLİLİK, mesajı DEĞİŞTİRMEZ)
+          - 'gateway_mitm'         : saldırganın iki segment arasına (ör. IVI
+                                      ile backend, ya da gateway'in yönlendirdiği
+                                      iki ağ) aktif olarak yerleşip trafiği hem
+                                      okuyup hem DEĞİŞTİREBİLDİĞİNİ sınar —
+                                      karşılıklı kimlik doğrulama/TLS eksikliği
+                                      (R155-2.6 ortadaki adam/MitM — GİZLİLİK +
+                                      BÜTÜNLÜK, mesaj aktif olarak değiştirilir)
+
+        can_sniffing pasif bir yetenek (yalnızca dinleme) test ederken,
+        gateway_mitm saldırganın iletişim yoluna aktif olarak yerleşip trafiği
+        değiştirebildiğini test eder — biri gizliliği, diğeri hem gizliliği
+        hem bütünlüğü tehdit eder.
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → yetenek başarılı (koruma yok) = zafiyet
+          accepted=False → ilgili koruma (payload şifreleme/MAC veya karşılıklı
+          kimlik doğrulama) engelledi
+        """
+        raise NotImplementedError(f"{self.adapter_type}: comm_interception_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,
