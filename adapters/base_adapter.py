@@ -155,6 +155,19 @@ class BaseAdapter(ABC):
           - 'manifest_tamper'   : imza geçerli kalırken yalnızca manifest/meta veriyi
                                   (versiyon, hedef ECU listesi, hash) değiştirip gönderir
                                   (R155-3.7 güncelleme meta verisi manipülasyonu)
+          - 'channel_dos'       : güncelleme kanalını/sunucusunu yüksek istek
+                                  hacmiyle yorarak meşru araçların güncelleme
+                                  indirmesini engellemeyi dener (R155-3.2
+                                  güncelleme kanalına DoS — ERİŞİLEBİLİRLİK;
+                                  paketin kendisiyle değil, kanalın MEŞGUL
+                                  edilmesiyle ilgilidir)
+          - 'unauthorized_upload' : OTA dağıtım sunucusuna, uygun yetkilendirme
+                                  olmadan doğrudan yeni bir paket YÜKLEMEYİ
+                                  dener — 'bad_signature'dan FARKLI olarak bu,
+                                  ARACIN paketi kabul edip etmediğini değil,
+                                  SUNUCUNUN yetkisiz bir yayıncıdan paket kabul
+                                  edip etmediğini sınar (R155-3.3 yetkisiz
+                                  yazılım yükleme — SUNUCU TARAFI yetkilendirme)
 
         Dönüş: {'accepted': bool, 'detail': str}
           accepted=True → saldırı başarılı (koruma yok) = zafiyet

@@ -1,19 +1,27 @@
 """
 GÖKTÜRK — OTA / Firmware Güncelleme Saldırı Modülü (UN R156 / R155 Kat.3)
-Taktik: OTA güncelleme kanalına beş saldırı senaryosu uygular ve her birini
+Taktik: OTA güncelleme kanalına yedi saldırı senaryosu uygular ve her birini
 ilgili R155 vektörüne çapalar:
 
-  - pre_update_tamper → R155-3.1 (güncelleme öncesi yazılım manipülasyonu)
-  - bad_signature     → R155-3.4 (imza doğrulama atlatma)
-  - plaintext         → R155-3.5 (OTA kanal gizliliği ihlali)
-  - rollback          → R155-3.6 (eski sürüme geri döndürme / downgrade)
-  - manifest_tamper   → R155-3.7 (güncelleme meta verisi / manifesto manipülasyonu)
+  - pre_update_tamper    → R155-3.1 (güncelleme öncesi yazılım manipülasyonu)
+  - channel_dos          → R155-3.2 (güncelleme kanalına DoS)
+  - unauthorized_upload  → R155-3.3 (yetkisiz yazılım yükleme)
+  - bad_signature        → R155-3.4 (imza doğrulama atlatma)
+  - plaintext            → R155-3.5 (OTA kanal gizliliği ihlali)
+  - rollback             → R155-3.6 (eski sürüme geri döndürme / downgrade)
+  - manifest_tamper      → R155-3.7 (güncelleme meta verisi / manifesto manipülasyonu)
 
 Saha araştırmasında UN R156 (SUMS) ve OTA kanalı kritik bir saldırı yüzeyi
 olarak tanımlanmıştı; bu modül o boşluğu kapatır.
 
+channel_dos ile unauthorized_upload, diğer beş senaryodan farklı bir katmanı
+hedefler: diğerleri ARACIN paketi/kanalı nasıl doğruladığını (imza, şifreleme,
+versiyon, manifest, build bütünlüğü) test ederken, bu ikisi OTA SUNUCUSUNUN/
+dağıtım kanalının kendisini hedefler — biri erişilebilirliğini (DoS), diğeri
+yayıncı yetkilendirmesini (kim paket yükleyebilir) sınar.
+
 Her zafiyetli senaryo, KENDİ R155 vektörüyle AYRI bir Finding olarak
-raporlanır (List[Finding]) — böylece beş vektör de kapsam sayımına doğru
+raporlanır (List[Finding]) — böylece yedi vektör de kapsam sayımına doğru
 şekilde yansır; hiçbiri "birincil vektör" gölgesinde kaybolmaz.
 """
 
@@ -77,6 +85,32 @@ _SCENARIOS = {
             "flaşlamayı önle)."
         ),
     },
+    "channel_dos": {
+        "vector": "R155-3.2",
+        "label": "Güncelleme kanalına DoS",
+        "impact_safety": "low",
+        "cvss": 5.5,
+        "remediation": (
+            "1. OTA dağıtım sunucusu/kanalı için hız sınırlama (rate limiting) "
+            "ve anomali tespiti uygula. "
+            "2. Güncelleme dağıtımını CDN/çok bölgeli altyapı üzerinden yaparak "
+            "tek noktadan hizmet dışı bırakma riskini azalt. "
+            "3. Kritik güvenlik güncellemeleri için düşük bant genişlikli "
+            "yedek dağıtım kanalı (ör. uydu/SMS tetikleyici) planla."
+        ),
+    },
+    "unauthorized_upload": {
+        "vector": "R155-3.3",
+        "label": "Yetkisiz yazılım yükleme",
+        "impact_safety": "high",
+        "cvss": 8.3,
+        "remediation": (
+            "1. OTA dağıtım kanalına paket yükleme yetkisini yalnızca "
+            "kimliği doğrulanmış, imzalı yayıncı sertifikalarıyla sınırla. "
+            "2. Her yükleme için çok kişili onay (four-eyes principle) ve "
+            "değişmez denetim kaydı (immutable audit log) zorunlu kıl."
+        ),
+    },
 }
 
 _COMMON_REMEDIATION = (
@@ -95,10 +129,11 @@ class OTAAttackPlugin(BasePlugin):
     applicable_adapters = ["socketcan", "carla", "eth"]
     severity_hint = "high"
     description = (
-        "OTA güncelleme kanalına build-öncesi manipülasyon (R155-3.1), rollback "
-        "(R155-3.6), imza atlatma (R155-3.4), şifrelenmemiş kanal (R155-3.5) ve "
-        "manifest/meta veri manipülasyonu (R155-3.7) senaryolarını uygulayarak "
-        "UN R156/R155 Kategori 3 güncelleme güvenliğini test eder."
+        "OTA güncelleme kanalına build-öncesi manipülasyon (R155-3.1), kanal "
+        "DoS (R155-3.2), yetkisiz yükleme (R155-3.3), imza atlatma (R155-3.4), "
+        "şifrelenmemiş kanal (R155-3.5), rollback (R155-3.6) ve manifest/meta "
+        "veri manipülasyonu (R155-3.7) senaryolarını uygulayarak UN R156/R155 "
+        "Kategori 3 güncelleme güvenliğini test eder."
     )
 
     def run(self, component_config: dict):
@@ -140,7 +175,7 @@ class OTAAttackPlugin(BasePlugin):
                 status="not_vulnerable",
                 title="OTA Saldırı: Güncelleme korumaları aktif",
                 description=(
-                    "Beş OTA saldırı senaryosunun tamamı ilgili koruma mekanizması "
+                    "Yedi OTA saldırı senaryosunun tamamı ilgili koruma mekanizması "
                     "tarafından engellendi:\n\n" + "\n".join(lines)
                 ),
                 attack_feasibility="high",

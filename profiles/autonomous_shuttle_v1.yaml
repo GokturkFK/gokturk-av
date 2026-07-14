@@ -116,7 +116,7 @@ components:
     category: "connectivity"
     position_3d: [0.0, 0.3, -0.1]
     attack_surfaces: ["ota"]
-    r155_vectors: ["R155-3.1", "R155-3.7", "R155-3.4"]
+    r155_vectors: ["R155-3.1", "R155-3.2", "R155-3.3", "R155-3.7", "R155-3.4"]
     networks: ["vcan0"]
     test_status: "not_tested"
 
