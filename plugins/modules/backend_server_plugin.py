@@ -1,17 +1,24 @@
 """
 GÖKTÜRK — Arka Uç / Filo Yönetim Sunucusu Güvenlik Modülü (R155 Kategori 1)
-Taktik: aracın bağlandığı backend (filo yönetim/telematik) sunucusuna iki
+Taktik: aracın bağlandığı backend (filo yönetim/telematik) sunucusuna üç
 senaryo uygular:
 
-  - weak_auth → R155-1.1 (yetkisiz uzaktan sunucu erişimi)
-  - dos       → R155-1.5 (araç servisleri arka uç sunucusuna DoS)
+  - weak_auth               → R155-1.1 (yetkisiz uzaktan sunucu erişimi)
+  - dos                     → R155-1.5 (araç servisleri arka uç sunucusuna DoS)
+  - supply_chain_compromise → R155-1.4 (tedarik zinciri saldırısı — backend)
 
 Saha araştırmasında vurgulandığı gibi backend, filo homojenliği nedeniyle
 özellikle kritik bir yüzeydir: tek bir backend zaafı TÜM FİLOYU aynı anda
-etkileyebilir (R155-1.4 tedarik zinciri senaryosuyla da ilişkili).
+etkileyebilir. İlk iki senaryo bu ilkeyi doğrudan sınarken, üçüncü senaryo
+(supply_chain_compromise) bu modülün kendi remediation metninde başından
+beri "(R155-1.4)" olarak anılan ama hiçbir Finding üretmeyen bir boşluğu
+kapatır: weak_auth sunucuya DOĞRUDAN erişimi test ederken,
+supply_chain_compromise sunucunun GÜVENDİĞİ tedarik zincirini (CI/CD
+hattına giren üçüncü taraf paket/kütüphane/konteyner imajı) hedefler —
+saldırgan sunucuyla hiç doğrudan etkileşmeden, ona giden yazılımı zehirler.
 
 Her zafiyetli senaryo, KENDİ R155 vektörüyle AYRI bir Finding olarak
-raporlanır (List[Finding]) — böylece her iki vektör de kapsam sayımına
+raporlanır (List[Finding]) — böylece her üç vektör de kapsam sayımına
 doğru şekilde yansır.
 """
 
@@ -42,11 +49,25 @@ _SCENARIOS = {
             "2. Backend'i DDoS koruması olan bir CDN/WAF arkasına al."
         ),
     },
+    "supply_chain_compromise": {
+        "vector": "R155-1.4",
+        "label": "Tedarik zinciri saldırısı (backend)",
+        "impact_safety": "high",
+        "impact_privacy": "high",
+        "cvss": 8.1,
+        "remediation": (
+            "1. CI/CD hattına giren tüm üçüncü taraf paket/kütüphane/konteyner "
+            "imajlarında imza doğrulaması ve SBOM (yazılım malzeme listesi) "
+            "eşleşmesi zorunlu kıl. "
+            "2. Bağımlılık kaynaklarını (package registry) izin listesine "
+            "(allow-list) al; imzasız/doğrulanmamış kaynaklardan çekmeyi engelle."
+        ),
+    },
 }
 
 _COMMON_REMEDIATION = (
-    " 3. Düzenli sızma testi ve tedarik zinciri (üçüncü taraf bileşen) "
-    "denetimi yap (R155-1.4)."
+    " 3. Düzenli sızma testi ve üçüncü taraf bileşen denetimi programını "
+    "sürekli hale getir."
 )
 
 
@@ -62,8 +83,9 @@ class BackendServerPlugin(BasePlugin):
     severity_hint = "high"
     description = (
         "Araç filo yönetim/telematik backend sunucusuna zayıf kimlik "
-        "doğrulama (R155-1.1) ve servis engelleme (R155-1.5) senaryolarıyla "
-        "erişim/dayanıklılık testi yapar."
+        "doğrulama (R155-1.1), servis engelleme (R155-1.5) ve tedarik "
+        "zinciri saldırısı (R155-1.4) senaryolarıyla erişim/dayanıklılık "
+        "testi yapar."
     )
 
     def run(self, component_config: dict):
@@ -105,7 +127,7 @@ class BackendServerPlugin(BasePlugin):
                 status="not_vulnerable",
                 title="Backend Sunucu: Erişim/dayanıklılık korumaları aktif",
                 description=(
-                    "İki backend saldırı senaryosunun tamamı ilgili koruma "
+                    "Üç backend saldırı senaryosunun tamamı ilgili koruma "
                     "mekanizması tarafından engellendi:\n\n" + "\n".join(lines)
                 ),
                 attack_feasibility="high",

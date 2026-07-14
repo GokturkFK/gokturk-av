@@ -1,6 +1,6 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **30/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **31/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -16,7 +16,7 @@
 | R155-1.1 | Yetkisiz uzaktan sunucu erişimi | ✅ Bitmiş |
 | R155-1.2 | Personel tarafından hak kötüye kullanımı | 🔧 Yazılımla yapılabilir |
 | R155-1.3 | Sunucuya yetkisiz internet erişimi | 🔧 Yazılımla yapılabilir |
-| R155-1.4 | Tedarik zinciri saldırısı (backend) | 🔧 Yazılımla yapılabilir |
+| R155-1.4 | Tedarik zinciri saldırısı (backend) | ✅ Bitmiş |
 | R155-1.5 | Araç servisleri arka uç sunucusuna DoS | ✅ Bitmiş |
 
 ## Kategori 2 — İletişim kanallarına yönelik tehditler
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 30 |
-| 🔧 Yazılımla yapılabilir (kalan) | 25 |
+| ✅ Bitmiş | 31 |
+| 🔧 Yazılımla yapılabilir (kalan) | 24 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 30/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 31/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
