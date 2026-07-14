@@ -260,6 +260,18 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: ivi_pivot_probe desteklenmez")
 
+    # ── Telematik Kanalı İstismarı (R155 Kat.5 — Dış Bağlanabilirlik) ─────────
+
+    def telematics_channel_probe(self, target: str) -> bool:
+        """Hücresel/WiFi telematik kanalının kendisine yönelik bir istismar
+        dener — zayıf şifreleme, sahte baz istasyonu/AP kabulü veya kanal
+        üzerinde dinleme/enjeksiyon.
+
+        Dönüş: True → kanal istismar edilebildi (zafiyet). False → kanal
+        koruması engelledi.
+        """
+        raise NotImplementedError(f"{self.adapter_type}: telematics_channel_probe desteklenmez")
+
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
     def get_info(self) -> Dict[str, Any]:

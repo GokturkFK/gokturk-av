@@ -308,3 +308,11 @@ class MockAdapter(BaseAdapter):
         if self.mode == "empty":
             return False  # IVI erişilemez / yanıt yok
         return self.mode == "vulnerable"
+
+    def telematics_channel_probe(self, target: str) -> bool:
+        # secure modda kanal güçlü şifreleme + karşılıklı kimlik doğrulama
+        # kullanır. vulnerable modda zayıf/eski şifreleme veya sahte baz
+        # istasyonu/AP kabul edilebilir.
+        if self.mode == "empty":
+            return False  # kanal erişilemez / yanıt yok
+        return self.mode == "vulnerable"
