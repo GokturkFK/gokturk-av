@@ -305,7 +305,7 @@ def test_mock_physical_ecu_access_probe_behaviour():
 
 
 def test_mock_firmware_integrity_probe_behaviour():
-    for scn in ("malicious_replace", "integrity_check_bypass"):
+    for scn in ("malicious_replace", "integrity_check_bypass", "secure_boot_bypass"):
         assert _mock("vulnerable").firmware_integrity_probe("hpc_compute", scn)["accepted"] is True
         assert _mock("secure").firmware_integrity_probe("hpc_compute", scn)["accepted"] is False
         assert _mock("empty").firmware_integrity_probe("hpc_compute", scn)["accepted"] is False
@@ -1042,18 +1042,20 @@ def test_firmware_integrity_matrix():
     assert FirmwareIntegrityPlugin(_mock("empty")).run({"id": "hpc_compute"}).status == "not_vulnerable"
 
 
-def test_firmware_integrity_vulnerable_returns_two_distinct_vectors():
+def test_firmware_integrity_vulnerable_returns_three_distinct_vectors():
     findings = FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
     vectors = sorted(f.r155_vector_id for f in findings)
-    assert vectors == ["R155-6.1", "R155-6.4"]
+    assert vectors == ["R155-6.1", "R155-6.13", "R155-6.4"]
     assert all(f.r155_category == 6 for f in findings)
     replace_finding = next(f for f in findings if f.r155_vector_id == "R155-6.1")
     assert replace_finding.impact_safety == "critical"
+    boot_finding = next(f for f in findings if f.r155_vector_id == "R155-6.13")
+    assert boot_finding.impact_safety == "critical"
 
 
-def test_firmware_integrity_lists_both_scenarios():
+def test_firmware_integrity_lists_all_three_scenarios():
     findings = FirmwareIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
-    assert len(findings) == 2
+    assert len(findings) == 3
 
 
 def test_firmware_integrity_secure_reports_all_protected():

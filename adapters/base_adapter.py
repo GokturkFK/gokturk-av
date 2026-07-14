@@ -252,6 +252,14 @@ class BaseAdapter(ABC):
           - 'integrity_check_bypass' : çalışma anında bütünlük doğrulamasını
                                         (checksum/imza) atlatmayı dener
                                         (R155-6.4 yazılım bütünlüğü ihlali)
+          - 'secure_boot_bypass'     : önyükleme (boot) sırasındaki güven
+                                        zincirinin kendisini (bootloader → çekirdek
+                                        → uygulama imza doğrulama basamakları)
+                                        atlatmayı dener — 'integrity_check_bypass'
+                                        çalışma ANINDAKİ periyodik doğrulamayı test
+                                        ederken, bu senaryo SADECE önyükleme
+                                        ZAMANINDAKİ ilk güven kurulumunu hedefler
+                                        (R155-6.13 güvenli önyükleme atlatma)
 
         Dönüş: {'accepted': bool, 'detail': str}
           accepted=True → saldırı başarılı (bütünlük koruması yok) = zafiyet
