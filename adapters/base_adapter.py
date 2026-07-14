@@ -549,6 +549,58 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: firmware_extraction_probe desteklenmez")
 
+    # ── İnsan/Kurumsal Faktörler (R155 Kat.4 — İstenmeyen İnsan Davranışları) ─
+
+    def human_factor_probe(self, target: str, scenario: str) -> Dict:
+        """Filo operasyonlarının insan/kurumsal faktör kontrollerini üç
+        farklı açıdan test eder. Bu üçü TEKNİK değil PROSEDÜREL/KURUMSAL
+        kontrollerdir; teknik bir güvenlik açığı değil, bir SÜRECİN var olup
+        olmadığını ve etkili çalışıp çalışmadığını sınar.
+
+        scenario:
+          - 'phishing_susceptibility'          : personelin/operatörlerin
+                                                  kimlik avı (phishing)
+                                                  denemelerine karşı MFA/
+                                                  step-up doğrulama gibi
+                                                  telafi edici bir kontrolü
+                                                  olup olmadığını sınar —
+                                                  tek bir tıklama/kimlik bilgisi
+                                                  girişiyle hesabın tamamen
+                                                  ele geçirilip geçirilemediği
+                                                  (R155-4.1 sosyal mühendislik
+                                                  / phishing)
+          - 'insecure_default_config'          : yeni devreye alınan bir
+                                                  bileşenin (ör. yeni araç,
+                                                  yeni backend node) üretici
+                                                  varsayılan ayarlarıyla
+                                                  (varsayılan parola, açık
+                                                  debug modu, gereksiz
+                                                  servisler) mi yoksa
+                                                  sertleştirilmiş bir taban
+                                                  çizgisiyle mi devreye
+                                                  girdiğini sınar (R155-4.3
+                                                  güvensiz varsayılan
+                                                  yapılandırma)
+          - 'operator_misconfiguration_unchecked' : bir operatörün güvenlik
+                                                  açısından anlamlı bir
+                                                  yapılandırma değişikliğinin
+                                                  (ör. güvenlik duvarı kuralı
+                                                  gevşetme, loglamayı kapatma)
+                                                  akran incelemesi/değişiklik
+                                                  yönetimi kapısından
+                                                  GEÇMEDEN doğrudan
+                                                  uygulanıp uygulanamadığını
+                                                  sınar (R155-4.5 operatör
+                                                  tarafından hatalı güvenlik
+                                                  yapılandırması)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → ilgili süreç/telafi edici kontrol YOK veya
+          atlatıldı = zafiyet
+          accepted=False → süreç/kontrol etkili şekilde çalışıyor
+        """
+        raise NotImplementedError(f"{self.adapter_type}: human_factor_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,
