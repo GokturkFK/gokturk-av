@@ -42,6 +42,7 @@ from plugins.modules.comm_interception_plugin import CommInterceptionPlugin
 from plugins.modules.firmware_extraction_plugin import FirmwareExtractionPlugin
 from plugins.modules.human_factor_plugin import HumanFactorPlugin
 from plugins.modules.cloud_api_plugin import CloudAPIPlugin
+from plugins.modules.wireless_rf_plugin import WirelessRFPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -360,6 +361,13 @@ def test_mock_cloud_api_probe_behaviour():
         assert _mock("vulnerable").cloud_api_probe("telematics_module", method=method) is True
         assert _mock("secure").cloud_api_probe("telematics_module", method=method) is False
         assert _mock("empty").cloud_api_probe("telematics_module", method=method) is False
+
+
+def test_mock_wireless_rf_probe_behaviour():
+    for scn in ("cellular_jamming_undetected", "dsrc_protocol_exploit"):
+        assert _mock("vulnerable").wireless_rf_probe("wireless_rf_interfaces", scn)["accepted"] is True
+        assert _mock("secure").wireless_rf_probe("wireless_rf_interfaces", scn)["accepted"] is False
+        assert _mock("empty").wireless_rf_probe("wireless_rf_interfaces", scn)["accepted"] is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -1015,6 +1023,58 @@ def test_cloud_api_device_binding_config():
     assert "sertifika" in f.title.lower() or "binding" in f.title.lower() or "bağlama" in f.title.lower()
 
 
+def test_wireless_rf_matrix():
+    vuln = WirelessRFPlugin(_mock("vulnerable")).run({"id": "wireless_rf_interfaces"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
+    assert WirelessRFPlugin(_mock("secure")).run({"id": "wireless_rf_interfaces"}).status == "not_vulnerable"
+    assert WirelessRFPlugin(_mock("empty")).run({"id": "wireless_rf_interfaces"}).status == "not_vulnerable"
+
+
+def test_wireless_rf_vulnerable_returns_two_distinct_vectors():
+    findings = WirelessRFPlugin(_mock("vulnerable")).run({"id": "wireless_rf_interfaces"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-2.11", "R155-2.13"]
+    assert all(f.r155_category == 2 for f in findings)
+    assert all(f.is_vulnerable() for f in findings)
+    jamming_finding = next(f for f in findings if f.r155_vector_id == "R155-2.11")
+    assert jamming_finding.impact_safety == "high"
+    dsrc_finding = next(f for f in findings if f.r155_vector_id == "R155-2.13")
+    assert dsrc_finding.impact_safety == "high"
+
+
+def test_wireless_rf_lists_both_scenarios():
+    findings = WirelessRFPlugin(_mock("vulnerable")).run({"id": "wireless_rf_interfaces"})
+    assert len(findings) == 2
+
+
+def test_wireless_rf_secure_reports_all_protected():
+    f = WirelessRFPlugin(_mock("secure")).run({"id": "wireless_rf_interfaces"})
+    assert f.status == "not_vulnerable"
+    assert "korumal" in f.title.lower() or "aktif" in f.title.lower()
+
+
+def test_wireless_rf_inconclusive_when_adapter_unsupported():
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = WirelessRFPlugin(bare).run({"id": "wireless_rf_interfaces"})
+    assert f.status == "inconclusive"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -1032,7 +1092,7 @@ def test_orchestrator_discovers_all_plugins():
             "debug-port-access", "firmware-integrity", "physical-ecu-access",
             "external-device-access", "app-layer", "personal-data-protection",
             "comm-interception", "firmware-extraction", "human-factor",
-            "cloud-api-access"} <= ids
+            "cloud-api-access", "wireless-rf"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):

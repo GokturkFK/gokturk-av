@@ -516,3 +516,26 @@ class MockAdapter(BaseAdapter):
         if self.mode == "empty":
             return False
         return self.mode == "vulnerable"
+
+    def wireless_rf_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda jamming tespiti + fail-safe geçişi ve DSRC/802.11p
+        # MAC/PHY dayanıklılığı (malformed frame reddi) aktif. vulnerable
+        # modda ikisi de yok. empty modda arayüz erişilemez (korumalı sayılır).
+        if self.mode == "empty":
+            detail = {
+                "cellular_jamming_undetected": "Hücresel modem erişilemez",
+                "dsrc_protocol_exploit": "DSRC/V2X radyosu erişilemez",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "cellular_jamming_undetected": "Jamming tespiti aktif; sinyal kaybı fail-safe/degraded moda geçişi tetikledi",
+                "dsrc_protocol_exploit": "MAC/PHY katmanı hatalı biçimlendirilmiş çerçeveleri reddetti, OBU kararlı kaldı",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "cellular_jamming_undetected": "Sinyal kaybı, kasıtlı jamming olarak tespit edilmeden sessizce kabul edildi (fail-safe yok)",
+            "dsrc_protocol_exploit": "Hatalı biçimlendirilmiş DSRC/802.11p çerçevesi OBU'da DoS/kararsızlığa yol açtı",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}

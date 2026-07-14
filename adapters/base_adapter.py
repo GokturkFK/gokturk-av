@@ -625,6 +625,41 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: cloud_api_probe desteklenmez")
 
+    # ── Kablosuz RF Arayüzleri (R155 Kat.2 — İletişim Kanalları) ──────────────
+
+    def wireless_rf_probe(self, target: str, scenario: str) -> Dict:
+        """Aracın iki farklı RF/kablosuz arayüzünü — hücresel telematik
+        modem ve DSRC/V2X radyosu — ayrı ayrı test eder.
+
+        scenario:
+          - 'cellular_jamming_undetected' : hücresel (LTE/5G) telematik
+                                             kanalının kasıtlı RF jamming/
+                                             sinyal manipülasyonu ile normal
+                                             sinyal kaybından AYIRT EDİLİP
+                                             edilemediğini ve bir güvenli
+                                             duruma (fail-safe/degraded mode)
+                                             geçilip geçilmediğini sınar
+                                             (R155-2.11 hücresel ağ kanalı
+                                             jamming / sinyal manipülasyonu)
+          - 'dsrc_protocol_exploit'       : DSRC/IEEE 802.11p MAC/PHY
+                                             katmanının kendisinin (kanal
+                                             erişimi, WAVE servis reklamı,
+                                             hatalı biçimlendirilmiş çerçeve)
+                                             istismarına karşı dayanıklı olup
+                                             olmadığını sınar — V2X Spoof
+                                             modülünün (R155-2.7) mesaj
+                                             İÇERİĞİ doğrulamasından FARKLI
+                                             olarak, bu PROTOKOLÜN/MAC
+                                             katmanının kendisini hedefler
+                                             (R155-2.13 DSRC / IEEE 802.11p
+                                             protokol açıklarının istismarı)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → saldırı başarılı (tespit/dayanıklılık yok) = zafiyet
+          accepted=False → tespit/dayanıklılık mekanizması etkili
+        """
+        raise NotImplementedError(f"{self.adapter_type}: wireless_rf_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,
