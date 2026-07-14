@@ -251,7 +251,7 @@ def test_mock_fuzz_ecu_behaviour():
 
 def test_mock_ota_probe_behaviour():
     # vulnerable -> her senaryo accepted; secure -> hicbiri; empty -> yanitsiz
-    for scn in ("rollback", "bad_signature", "plaintext"):
+    for scn in ("rollback", "bad_signature", "plaintext", "pre_update_tamper", "manifest_tamper"):
         assert _mock("vulnerable").ota_update_probe("tcu", scn)["accepted"] is True
         assert _mock("secure").ota_update_probe("tcu", scn)["accepted"] is False
         assert _mock("empty").ota_update_probe("tcu", scn)["accepted"] is False
@@ -438,18 +438,22 @@ def test_ota_attack_matrix():
     assert OTAAttackPlugin(_mock("empty")).run({"id": "tcu"}).status == "not_vulnerable"
 
 
-def test_ota_attack_vulnerable_returns_three_distinct_vectors():
+def test_ota_attack_vulnerable_returns_five_distinct_vectors():
     findings = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
     vectors = sorted(f.r155_vector_id for f in findings)
-    assert vectors == ["R155-3.4", "R155-3.5", "R155-3.6"]
+    assert vectors == ["R155-3.1", "R155-3.4", "R155-3.5", "R155-3.6", "R155-3.7"]
     assert all(f.r155_category == 3 for f in findings)
     sig_finding = next(f for f in findings if f.r155_vector_id == "R155-3.4")
     assert sig_finding.impact_safety == "high"
+    pre_update_finding = next(f for f in findings if f.r155_vector_id == "R155-3.1")
+    assert pre_update_finding.impact_safety == "high"
+    manifest_finding = next(f for f in findings if f.r155_vector_id == "R155-3.7")
+    assert manifest_finding.impact_safety == "medium"
 
 
-def test_ota_attack_lists_all_three_scenarios():
+def test_ota_attack_lists_all_five_scenarios():
     findings = OTAAttackPlugin(_mock("vulnerable")).run({"id": "tcu"})
-    assert len(findings) == 3
+    assert len(findings) == 5
 
 
 def test_ota_attack_secure_reports_all_protected():

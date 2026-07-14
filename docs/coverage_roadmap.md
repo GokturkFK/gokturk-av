@@ -1,6 +1,6 @@
-# GÖKTÜRK-AV — R155 Annex 5 Kapsam Yol Haritası
+# UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi, elle hazırlanmış anlık durum belgesi. Güncel toplam: **19/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **25/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -26,7 +26,7 @@
 | R155-2.1 | Mesaj sahteciliği / spoofing | 🔧 Yazılımla yapılabilir |
 | R155-2.2 | Mesaj enjeksiyonu (CAN, Ethernet) | ✅ Bitmiş |
 | R155-2.3 | Bilgi dinleme / sniffing | 🔧 Yazılımla yapılabilir |
-| R155-2.4 | Servis engelleme / DoS | 🔧 Yazılımla yapılabilir |
+| R155-2.4 | Servis engelleme / DoS | ✅ Bitmiş |
 | R155-2.5 | Replay saldırısı | ✅ Bitmiş |
 | R155-2.6 | Ortadaki adam / MitM | 🔧 Yazılımla yapılabilir |
 | R155-2.7 | V2X mesaj manipülasyonu | ✅ Bitmiş |
@@ -41,13 +41,13 @@
 
 | Vektör | Açıklama | Durum |
 |---|---|---|
-| R155-3.1 | Güncelleme öncesi yazılım manipülasyonu | 🔧 Yazılımla yapılabilir |
+| R155-3.1 | Güncelleme öncesi yazılım manipülasyonu | ✅ Bitmiş |
 | R155-3.2 | Güncelleme kanalına DoS | 🔧 Yazılımla yapılabilir |
 | R155-3.3 | Yetkisiz yazılım yükleme | 🔧 Yazılımla yapılabilir |
 | R155-3.4 | İmza doğrulama atlatma | ✅ Bitmiş |
 | R155-3.5 | OTA kanal gizliliği ihlali | ✅ Bitmiş |
 | R155-3.6 | Eski sürüme geri döndürme (downgrade) saldırısı | ✅ Bitmiş |
-| R155-3.7 | Güncelleme meta verisi / manifesto manipülasyonu | 🔧 Yazılımla yapılabilir |
+| R155-3.7 | Güncelleme meta verisi / manifesto manipülasyonu | ✅ Bitmiş |
 
 ## Kategori 4 — İstenmeyen insan davranışlarına yönelik tehditler
 
@@ -63,10 +63,10 @@
 
 | Vektör | Açıklama | Durum |
 |---|---|---|
-| R155-5.1 | Telematik kanalı istismarı (hücresel/WiFi) | 🔧 Yazılımla yapılabilir |
+| R155-5.1 | Telematik kanalı istismarı (hücresel/WiFi) | ✅ Bitmiş |
 | R155-5.2 | Bluetooth / kısa mesafeli kablosuz saldırı | 🔧 Yazılımla yapılabilir |
 | R155-5.3 | USB / fiziksel port saldırısı | 🔧 Yazılımla yapılabilir |
-| R155-5.4 | IVI / infotainment üzerinden pivot | 🔧 Yazılımla yapılabilir |
+| R155-5.4 | IVI / infotainment üzerinden pivot | ✅ Bitmiş |
 | R155-5.5 | OBD-II teşhis portu istismarı | ✅ Bitmiş |
 | R155-5.6 | ROS2/DDS kimliksiz topic erişimi | ✅ Bitmiş |
 | R155-5.7 | ROS2/DDS mesaj enjeksiyonu | ✅ Bitmiş |
@@ -75,13 +75,13 @@
 | R155-5.10 | Üçüncü taraf IVI uygulaması zafiyeti | 🔧 Yazılımla yapılabilir |
 | R155-5.11 | Araç-Bulut API yetkisiz erişimi | 🔧 Yazılımla yapılabilir |
 | R155-5.12 | V2I altyapısı üzerinden araç sistemlerine saldırı | 🔧 Yazılımla yapılabilir |
-| R155-5.13 | Uzaktan telematik sisteme exploit ile erişim | 🔧 Yazılımla yapılabilir |
+| R155-5.13 | Uzaktan telematik sisteme exploit ile erişim | ✅ Bitmiş |
 
 ## Kategori 6 — Veri ve koda yönelik tehditler
 
 | Vektör | Açıklama | Durum |
 |---|---|---|
-| R155-6.1 | Firmware değiştirme / zararlı kod | 🔧 Yazılımla yapılabilir |
+| R155-6.1 | Firmware değiştirme / zararlı kod | ✅ Bitmiş |
 | R155-6.2 | Kriptografik anahtar çalma | 🔧 Yazılımla yapılabilir |
 | R155-6.3 | Kişisel veri sızdırma | 🔧 Yazılımla yapılabilir |
 | R155-6.4 | Yazılım bütünlüğü ihlali | ✅ Bitmiş |
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 19 |
-| 🔧 Yazılımla yapılabilir (kalan) | 36 |
+| ✅ Bitmiş | 25 |
+| 🔧 Yazılımla yapılabilir (kalan) | 30 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 19/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 25/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.

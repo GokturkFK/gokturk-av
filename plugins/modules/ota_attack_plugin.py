@@ -1,17 +1,19 @@
 """
 GÖKTÜRK — OTA / Firmware Güncelleme Saldırı Modülü (UN R156 / R155 Kat.3)
-Taktik: OTA güncelleme kanalına üç saldırı senaryosu uygular ve her birini
+Taktik: OTA güncelleme kanalına beş saldırı senaryosu uygular ve her birini
 ilgili R155 vektörüne çapalar:
 
-  - bad_signature → R155-3.4 (imza doğrulama atlatma)
-  - plaintext     → R155-3.5 (OTA kanal gizliliği ihlali)
-  - rollback      → R155-3.6 (eski sürüme geri döndürme / downgrade)
+  - pre_update_tamper → R155-3.1 (güncelleme öncesi yazılım manipülasyonu)
+  - bad_signature     → R155-3.4 (imza doğrulama atlatma)
+  - plaintext         → R155-3.5 (OTA kanal gizliliği ihlali)
+  - rollback          → R155-3.6 (eski sürüme geri döndürme / downgrade)
+  - manifest_tamper   → R155-3.7 (güncelleme meta verisi / manifesto manipülasyonu)
 
 Saha araştırmasında UN R156 (SUMS) ve OTA kanalı kritik bir saldırı yüzeyi
 olarak tanımlanmıştı; bu modül o boşluğu kapatır.
 
 Her zafiyetli senaryo, KENDİ R155 vektörüyle AYRI bir Finding olarak
-raporlanır (List[Finding]) — böylece üç vektör de kapsam sayımına doğru
+raporlanır (List[Finding]) — böylece beş vektör de kapsam sayımına doğru
 şekilde yansır; hiçbiri "birincil vektör" gölgesinde kaybolmaz.
 """
 
@@ -19,6 +21,18 @@ from ..base_plugin import BasePlugin, Finding
 
 # Senaryo → (R155 vektörü, insan-okur etiket, impact_safety, cvss, remediation)
 _SCENARIOS = {
+    "pre_update_tamper": {
+        "vector": "R155-3.1",
+        "label": "Güncelleme öncesi yazılım manipülasyonu (build/staging)",
+        "impact_safety": "high",
+        "cvss": 8.4,
+        "remediation": (
+            "1. Build/staging boru hattında bütünlük hash'i (SHA-256+) doğrulamasını "
+            "her aşamada zorunlu kıl. "
+            "2. Paket derlenmeden imzalanana kadar geçen zinciri (build provenance) "
+            "kayıt altına al ve doğrula (ör. in-toto, SLSA)."
+        ),
+    },
     "bad_signature": {
         "vector": "R155-3.4",
         "label": "İmza doğrulama atlatma",
@@ -50,6 +64,19 @@ _SCENARIOS = {
             "2. Eski (zafiyetli olduğu bilinen) sürümleri kara listeye al."
         ),
     },
+    "manifest_tamper": {
+        "vector": "R155-3.7",
+        "label": "Güncelleme manifest/meta veri manipülasyonu",
+        "impact_safety": "medium",
+        "cvss": 7.0,
+        "remediation": (
+            "1. Manifest'i (versiyon, hedef ECU listesi, dosya hash'leri) paketten "
+            "bağımsız ama paketle birlikte imzala; ikisini birbirine kriptografik "
+            "olarak bağla. "
+            "2. Hedef ECU eşleşmesini araç tarafında da doğrula (yanlış ECU'ya "
+            "flaşlamayı önle)."
+        ),
+    },
 }
 
 _COMMON_REMEDIATION = (
@@ -68,9 +95,10 @@ class OTAAttackPlugin(BasePlugin):
     applicable_adapters = ["socketcan", "carla", "eth"]
     severity_hint = "high"
     description = (
-        "OTA güncelleme kanalına rollback (R155-3.6), imza atlatma (R155-3.4) ve "
-        "şifrelenmemiş kanal (R155-3.5) senaryolarını uygulayarak UN R156/R155 "
-        "Kategori 3 güncelleme güvenliğini test eder."
+        "OTA güncelleme kanalına build-öncesi manipülasyon (R155-3.1), rollback "
+        "(R155-3.6), imza atlatma (R155-3.4), şifrelenmemiş kanal (R155-3.5) ve "
+        "manifest/meta veri manipülasyonu (R155-3.7) senaryolarını uygulayarak "
+        "UN R156/R155 Kategori 3 güncelleme güvenliğini test eder."
     )
 
     def run(self, component_config: dict):
@@ -112,7 +140,7 @@ class OTAAttackPlugin(BasePlugin):
                 status="not_vulnerable",
                 title="OTA Saldırı: Güncelleme korumaları aktif",
                 description=(
-                    "Üç OTA saldırı senaryosunun tamamı ilgili koruma mekanizması "
+                    "Beş OTA saldırı senaryosunun tamamı ilgili koruma mekanizması "
                     "tarafından engellendi:\n\n" + "\n".join(lines)
                 ),
                 attack_feasibility="high",
