@@ -126,9 +126,15 @@ class BaseAdapter(ABC):
         """OTA güncelleme kanalına bir saldırı senaryosu uygular.
 
         scenario:
-          - 'rollback'      : eski sürüm imzalı paket gönder (R155-3.6 downgrade)
-          - 'bad_signature' : bozuk imzalı paket gönder (R155-3.4 imza atlatma)
-          - 'plaintext'     : kanalın şifreli olup olmadığını sorgula (R155-3.5)
+          - 'rollback'       : eski sürüm imzalı paket gönder (R155-3.6 downgrade)
+          - 'bad_signature'  : bozuk imzalı paket gönder (R155-3.4 imza atlatma)
+          - 'plaintext'      : kanalın şifreli olup olmadığını sorgula (R155-3.5)
+          - 'pre_update_tamper' : paket derlenmeden/imzalanmadan önce (build/staging
+                                  aşamasında) değiştirilmiş güncellemeyi dener
+                                  (R155-3.1 güncelleme öncesi yazılım manipülasyonu)
+          - 'manifest_tamper'   : imza geçerli kalırken yalnızca manifest/meta veriyi
+                                  (versiyon, hedef ECU listesi, hash) değiştirip gönderir
+                                  (R155-3.7 güncelleme meta verisi manipülasyonu)
 
         Dönüş: {'accepted': bool, 'detail': str}
           accepted=True → saldırı başarılı (koruma yok) = zafiyet

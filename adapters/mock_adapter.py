@@ -216,6 +216,8 @@ class MockAdapter(BaseAdapter):
                 "rollback": "Versiyon kontrolü eski paketi reddetti",
                 "bad_signature": "İmza doğrulama bozuk paketi reddetti",
                 "plaintext": "Kanal TLS ile şifreli",
+                "pre_update_tamper": "Build/staging bütünlük hash'i uyuşmazlığı yakaladı",
+                "manifest_tamper": "Manifest ayrıca imzalı; değiştirilmiş meta veri reddedildi",
             }.get(scenario, "Koruma aktif")
             return {"accepted": False, "detail": detail}
         # vulnerable
@@ -223,6 +225,8 @@ class MockAdapter(BaseAdapter):
             "rollback": "Eski sürüm imzalı paket kabul edildi (downgrade koruması yok)",
             "bad_signature": "Bozuk imzalı paket kabul edildi (imza doğrulama yok)",
             "plaintext": "OTA trafiği düz metin (şifreleme yok)",
+            "pre_update_tamper": "Build/staging aşamasında değiştirilmiş paket fark edilmeden imzalandı",
+            "manifest_tamper": "Manifest (versiyon/hedef ECU/hash) imzasız; değiştirilip kabul edildi",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
 
