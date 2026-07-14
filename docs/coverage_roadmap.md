@@ -1,6 +1,6 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **31/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **34/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -56,7 +56,7 @@
 | R155-4.1 | Sosyal mühendislik / phishing | 🔧 Yazılımla yapılabilir |
 | R155-4.2 | Meşru teşhis erişiminin kötüye kullanımı | ✅ Bitmiş |
 | R155-4.3 | Güvensiz varsayılan yapılandırma | 🔧 Yazılımla yapılabilir |
-| R155-4.4 | İç tehdit: yetkisiz harici cihaz bağlantısı | 🔧 Yazılımla yapılabilir |
+| R155-4.4 | İç tehdit: yetkisiz harici cihaz bağlantısı | ✅ Bitmiş |
 | R155-4.5 | Operatör tarafından hatalı güvenlik yapılandırması | 🔧 Yazılımla yapılabilir |
 
 ## Kategori 5 — Dış bağlanabilirliğe yönelik tehditler
@@ -64,8 +64,8 @@
 | Vektör | Açıklama | Durum |
 |---|---|---|
 | R155-5.1 | Telematik kanalı istismarı (hücresel/WiFi) | ✅ Bitmiş |
-| R155-5.2 | Bluetooth / kısa mesafeli kablosuz saldırı | 🔧 Yazılımla yapılabilir |
-| R155-5.3 | USB / fiziksel port saldırısı | 🔧 Yazılımla yapılabilir |
+| R155-5.2 | Bluetooth / kısa mesafeli kablosuz saldırı | ✅ Bitmiş |
+| R155-5.3 | USB / fiziksel port saldırısı | ✅ Bitmiş |
 | R155-5.4 | IVI / infotainment üzerinden pivot | ✅ Bitmiş |
 | R155-5.5 | OBD-II teşhis portu istismarı | ✅ Bitmiş |
 | R155-5.6 | ROS2/DDS kimliksiz topic erişimi | ✅ Bitmiş |
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 31 |
-| 🔧 Yazılımla yapılabilir (kalan) | 24 |
+| ✅ Bitmiş | 34 |
+| 🔧 Yazılımla yapılabilir (kalan) | 21 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 31/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 34/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.

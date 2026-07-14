@@ -339,6 +339,39 @@ class BaseAdapter(ABC):
 
     # ── Yardımcılar ──────────────────────────────────────────────────────────
 
+    # ── Harici Cihaz Bağlantı Arayüzleri (R155 Kat.4/5) ───────────────────────
+
+    def external_device_probe(self, target: str, scenario: str) -> Dict:
+        """IVI/kabin bağlantı merkezinin harici cihaz erişim kontrollerini
+        üç farklı açıdan test eder.
+
+        scenario:
+          - 'bluetooth_pairing_bypass' : kimlik doğrulaması/kullanıcı onayı
+                                          olmadan Bluetooth eşleştirmesi dener
+                                          (R155-5.2 Bluetooth / kısa mesafeli
+                                          kablosuz saldırı — PROTOKOL katmanı)
+          - 'usb_autorun_exploit'      : USB üzerinden takılan kötü niyetli bir
+                                          cihazın (mass storage/HID) kullanıcı
+                                          onayı olmadan otomatik çalıştırılmasını
+                                          dener (R155-5.3 USB / fiziksel port
+                                          saldırısı — PROTOKOL katmanı)
+          - 'rogue_device_enrollment'  : kanaldan (BT/USB/vb.) BAĞIMSIZ olarak,
+                                          yeni bir cihazın filo POLİTİKASI
+                                          gerektirdiği operatör onayı/denetim
+                                          adımı olmadan kalıcı olarak kaydını
+                                          dener (R155-4.4 iç tehdit: yetkisiz
+                                          harici cihaz bağlantısı — KURUMSAL/
+                                          POLİTİKA katmanı; 5.2/5.3'ten farklı
+                                          olarak burada test edilen protokol
+                                          güvenliği değil, filo YÖNETİM
+                                          POLİTİKASININ uygulanıp uygulanmadığı)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → saldırı/kayıt onaysız kabul edildi = zafiyet
+          accepted=False → ilgili kontrol (protokol veya politika) engelledi
+        """
+        raise NotImplementedError(f"{self.adapter_type}: external_device_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,
