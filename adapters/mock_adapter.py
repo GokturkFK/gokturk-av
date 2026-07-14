@@ -240,6 +240,8 @@ class MockAdapter(BaseAdapter):
                 "plaintext": "Kanal TLS ile şifreli",
                 "pre_update_tamper": "Build/staging bütünlük hash'i uyuşmazlığı yakaladı",
                 "manifest_tamper": "Manifest ayrıca imzalı; değiştirilmiş meta veri reddedildi",
+                "channel_dos": "Hız sınırlama (rate limiting) güncelleme kanalını yüksek istek hacminden korudu",
+                "unauthorized_upload": "Yayıncı kimlik doğrulaması yetkisiz yükleme isteğini reddetti",
             }.get(scenario, "Koruma aktif")
             return {"accepted": False, "detail": detail}
         # vulnerable
@@ -249,6 +251,8 @@ class MockAdapter(BaseAdapter):
             "plaintext": "OTA trafiği düz metin (şifreleme yok)",
             "pre_update_tamper": "Build/staging aşamasında değiştirilmiş paket fark edilmeden imzalandı",
             "manifest_tamper": "Manifest (versiyon/hedef ECU/hash) imzasız; değiştirilip kabul edildi",
+            "channel_dos": "Güncelleme kanalı yüksek istek hacmi altında yanıt vermez oldu, meşru araçlar güncellenemedi",
+            "unauthorized_upload": "Yetkisiz bir yayıncıdan gelen paket, kimlik doğrulama olmadan dağıtım kanalına kabul edildi",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
 
