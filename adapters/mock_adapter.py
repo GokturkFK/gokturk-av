@@ -354,3 +354,30 @@ class MockAdapter(BaseAdapter):
         if self.mode == "empty":
             return False  # kanal erişilemez / yanıt yok
         return self.mode == "vulnerable"
+
+    def external_device_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda Bluetooth eşleştirme onayı + USB autorun kapalı +
+        # filo politikası operatör onayını zorunlu kılıyor. vulnerable modda
+        # üçü de yok/atlatılabilir. empty modda arayüz erişilemez (korumalı
+        # sayılır).
+        if self.mode == "empty":
+            detail = {
+                "bluetooth_pairing_bypass": "Bluetooth arayüzü yanıt vermiyor",
+                "usb_autorun_exploit": "USB portu erişilemez/pasif",
+                "rogue_device_enrollment": "Kayıt servisi erişilemez",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "bluetooth_pairing_bypass": "Kullanıcı onayı + PIN doğrulaması eşleştirmeyi engelledi",
+                "usb_autorun_exploit": "Autorun devre dışı; bilinmeyen USB cihazı salt-okunur monte edildi",
+                "rogue_device_enrollment": "Filo politikası operatör onayı olmadan kaydı reddetti",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "bluetooth_pairing_bypass": "Kullanıcı onayı/PIN olmadan Bluetooth eşleştirmesi tamamlandı",
+            "usb_autorun_exploit": "Takılan USB cihazı onay olmadan otomatik çalıştırıldı (autorun)",
+            "rogue_device_enrollment": "Yeni cihaz, operatör onayı/denetim adımı olmadan kalıcı kaydedildi",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}
