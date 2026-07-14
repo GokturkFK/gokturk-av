@@ -193,6 +193,25 @@ class BaseAdapter(ABC):
                           burada saldırgan sunucuya doğrudan erişmiyor,
                           sunucunun GÜVENDİĞİ tedarik zincirini hedefliyor
                           (R155-1.4 tedarik zinciri saldırısı — backend)
+          - 'insider_privilege_abuse' : ZATEN GEÇERLİ kimlik bilgileriyle
+                          giriş yapmış bir personelin, kendisine tanınan rol/
+                          yetki kapsamının ÖTESİNDE bir işlem (ör. başka bir
+                          filo operatörünün araçlarına erişim, denetim
+                          kaydı olmadan toplu veri dışa aktarma) yapıp
+                          yapamadığını sınar — 'weak_auth'dan FARKLI olarak
+                          burada kimlik doğrulama SORUN DEĞİL, yetkilendirme/
+                          en az yetki (least privilege) ilkesinin uygulanıp
+                          uygulanmadığı sınanır (R155-1.2 personel tarafından
+                          hak kötüye kullanımı)
+          - 'unrestricted_internet_exposure' : yönetim panelinin/iç API'nin
+                          VPN, IP izin listesi veya ağ segmentasyonu olmadan
+                          doğrudan genel internetten erişilebilir olup
+                          olmadığını sınar — 'weak_auth'dan FARKLI olarak bu,
+                          kimlik bilgisinin GÜCÜNÜ değil, arayüzün BAŞTAN
+                          İTİBAREN internetten erişilebilir olup olmaması
+                          gereken bir çevre güvenliği (perimeter) sorununu
+                          test eder (R155-1.3 sunucuya yetkisiz internet
+                          erişimi)
 
         Dönüş: {'accepted': bool, 'detail': str}
           accepted=True → saldırı başarılı (koruma yok) = zafiyet

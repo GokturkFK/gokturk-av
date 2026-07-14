@@ -266,6 +266,8 @@ class MockAdapter(BaseAdapter):
                 "weak_auth": "Çok faktörlü kimlik doğrulama zayıf/varsayılan girişi reddetti",
                 "dos": "Hız sınırlama (rate limiting) yüksek istek hacmini engelledi",
                 "supply_chain_compromise": "CI/CD hattı imzasız/doğrulanmamış bağımlılığı reddetti",
+                "insider_privilege_abuse": "En az yetki (least privilege) ve denetim kaydı, kapsam dışı işlemi engelledi/işaretledi",
+                "unrestricted_internet_exposure": "Yönetim paneli VPN/IP izin listesi arkasında; genel internetten erişilemiyor",
             }.get(scenario, "Koruma aktif")
             return {"accepted": False, "detail": detail}
         # vulnerable
@@ -273,6 +275,8 @@ class MockAdapter(BaseAdapter):
             "weak_auth": "Varsayılan/zayıf kimlik bilgileriyle yönetim paneline erişildi",
             "dos": "Sunucu yüksek istek hacmi altında yanıt vermemeye başladı",
             "supply_chain_compromise": "İmzasız/doğrulanmamış üçüncü taraf bağımlılık CI/CD hattına sorgusuz kabul edildi",
+            "insider_privilege_abuse": "Geçerli oturum açmış personel, denetim kaydı olmadan kapsam dışı filo/araç verisine erişti",
+            "unrestricted_internet_exposure": "Yönetim paneli/iç API, ağ kısıtlaması olmadan doğrudan genel internetten erişilebiliyor",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
 
