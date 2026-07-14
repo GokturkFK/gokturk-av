@@ -458,3 +458,26 @@ class MockAdapter(BaseAdapter):
             "gateway_mitm": "Saldırgan iki segment arasına yerleşip trafiği okuyup değiştirebildi",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def firmware_extraction_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda anahtarlar HSM/secure element'te saklanıyor ve firmware
+        # imajı şifreli/gizlenmiş. vulnerable modda ikisi de yok. empty modda
+        # hedef erişilemez (korumalı sayılır).
+        if self.mode == "empty":
+            detail = {
+                "key_extraction": "Firmware/flash bellek erişilemez",
+                "firmware_reverse_engineering": "Firmware imajı erişilemez",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "key_extraction": "Anahtarlar HSM/secure element'te; bellek dökümünde okunabilir anahtar yok",
+                "firmware_reverse_engineering": "Firmware imajı şifreli; disassemble/decompile anlamlı sonuç vermedi",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "key_extraction": "Bellek dökümünde düz metin kriptografik anahtar bulundu",
+            "firmware_reverse_engineering": "Şifrelenmemiş firmware imajı başarıyla disassemble/decompile edildi",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}
