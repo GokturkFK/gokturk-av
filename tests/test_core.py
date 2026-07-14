@@ -43,6 +43,7 @@ from plugins.modules.firmware_extraction_plugin import FirmwareExtractionPlugin
 from plugins.modules.human_factor_plugin import HumanFactorPlugin
 from plugins.modules.cloud_api_plugin import CloudAPIPlugin
 from plugins.modules.wireless_rf_plugin import WirelessRFPlugin
+from plugins.modules.system_integrity_plugin import SystemIntegrityPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -368,6 +369,13 @@ def test_mock_wireless_rf_probe_behaviour():
         assert _mock("vulnerable").wireless_rf_probe("wireless_rf_interfaces", scn)["accepted"] is True
         assert _mock("secure").wireless_rf_probe("wireless_rf_interfaces", scn)["accepted"] is False
         assert _mock("empty").wireless_rf_probe("wireless_rf_interfaces", scn)["accepted"] is False
+
+
+def test_mock_system_integrity_probe_behaviour():
+    for scn in ("edr_tampering", "third_party_component_supply_chain", "hypervisor_container_escape"):
+        assert _mock("vulnerable").system_integrity_probe("hpc_compute", scn)["accepted"] is True
+        assert _mock("secure").system_integrity_probe("hpc_compute", scn)["accepted"] is False
+        assert _mock("empty").system_integrity_probe("hpc_compute", scn)["accepted"] is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -1075,6 +1083,60 @@ def test_wireless_rf_inconclusive_when_adapter_unsupported():
     assert f.status == "inconclusive"
 
 
+def test_system_integrity_matrix():
+    vuln = SystemIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
+    assert SystemIntegrityPlugin(_mock("secure")).run({"id": "hpc_compute"}).status == "not_vulnerable"
+    assert SystemIntegrityPlugin(_mock("empty")).run({"id": "hpc_compute"}).status == "not_vulnerable"
+
+
+def test_system_integrity_vulnerable_returns_three_distinct_vectors():
+    findings = SystemIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-6.11", "R155-6.12", "R155-6.14"]
+    assert all(f.r155_category == 6 for f in findings)
+    assert all(f.is_vulnerable() for f in findings)
+    edr_finding = next(f for f in findings if f.r155_vector_id == "R155-6.11")
+    assert edr_finding.impact_safety == "high"
+    supply_chain_finding = next(f for f in findings if f.r155_vector_id == "R155-6.12")
+    assert supply_chain_finding.impact_safety == "high"
+    escape_finding = next(f for f in findings if f.r155_vector_id == "R155-6.14")
+    assert escape_finding.impact_safety == "critical"
+
+
+def test_system_integrity_lists_all_three_scenarios():
+    findings = SystemIntegrityPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    assert len(findings) == 3
+
+
+def test_system_integrity_secure_reports_all_protected():
+    f = SystemIntegrityPlugin(_mock("secure")).run({"id": "hpc_compute"})
+    assert f.status == "not_vulnerable"
+    assert "korumal" in f.title.lower() or "aktif" in f.title.lower()
+
+
+def test_system_integrity_inconclusive_when_adapter_unsupported():
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = SystemIntegrityPlugin(bare).run({"id": "hpc_compute"})
+    assert f.status == "inconclusive"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -1092,7 +1154,7 @@ def test_orchestrator_discovers_all_plugins():
             "debug-port-access", "firmware-integrity", "physical-ecu-access",
             "external-device-access", "app-layer", "personal-data-protection",
             "comm-interception", "firmware-extraction", "human-factor",
-            "cloud-api-access", "wireless-rf"} <= ids
+            "cloud-api-access", "wireless-rf", "system-integrity"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
