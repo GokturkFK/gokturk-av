@@ -165,6 +165,15 @@ components:
     networks: []
     test_status: "not_tested"
 
+  - id: "wireless_rf_interfaces"
+    label: "Kablosuz RF Arayüzleri (Hücresel + DSRC/V2X)"
+    category: "connectivity"
+    position_3d: [0.0, 2.6, 0.4]
+    attack_surfaces: ["telematics", "v2x", "rf"]
+    r155_vectors: ["R155-2.11", "R155-2.13"]
+    networks: []
+    test_status: "not_tested"
+
   # ── Fiziksel / Donanım ──────────────────────────────────────────────────
   - id: "debug_ports"
     label: "Debug Portları (JTAG/UART)"

@@ -1,6 +1,6 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **50/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **52/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -33,9 +33,9 @@
 | R155-2.8 | GPS/GNSS spoofing | ✅ Bitmiş |
 | R155-2.9 | Sensör (LiDAR/kamera/radar) spoofing | ✅ Bitmiş |
 | R155-2.10 | PKES röle saldırısı (anahtarsız giriş sinyal aktarma) | 🔩 Donanım gerekli |
-| R155-2.11 | Hücresel ağ kanalı jamming / sinyal manipülasyonu | 🔧 Yazılımla yapılabilir |
+| R155-2.11 | Hücresel ağ kanalı jamming / sinyal manipülasyonu | ✅ Bitmiş |
 | R155-2.12 | NFC/RFID klonlama ve sahteciliği | 🔩 Donanım gerekli |
-| R155-2.13 | DSRC / IEEE 802.11p protokol açıklarının istismarı | 🔧 Yazılımla yapılabilir |
+| R155-2.13 | DSRC / IEEE 802.11p protokol açıklarının istismarı | ✅ Bitmiş |
 
 ## Kategori 3 — Güncelleme prosedürlerine yönelik tehditler
 
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 50 |
-| 🔧 Yazılımla yapılabilir (kalan) | 5 |
+| ✅ Bitmiş | 52 |
+| 🔧 Yazılımla yapılabilir (kalan) | 3 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 50/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 52/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
