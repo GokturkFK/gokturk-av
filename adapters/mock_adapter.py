@@ -303,12 +303,14 @@ class MockAdapter(BaseAdapter):
             detail = {
                 "malicious_replace": "Secure boot imza doğrulaması kötü niyetli firmware'i reddetti",
                 "integrity_check_bypass": "Çalışma anı bütünlük denetimi (runtime attestation) tutarsızlığı tespit etti",
+                "secure_boot_bypass": "Donanım kök-güvenli (hardware root-of-trust) önyükleme zinciri her basamağı doğruladı",
             }.get(scenario, "Koruma aktif")
             return {"accepted": False, "detail": detail}
         # vulnerable
         detail = {
             "malicious_replace": "İmzasız/kötü niyetli firmware imajı kabul edildi",
             "integrity_check_bypass": "Çalışan yazılım hiçbir checksum/imza doğrulaması olmadan yürütüldü",
+            "secure_boot_bypass": "Önyükleme zincirinde en az bir basamak (bootloader/çekirdek/uygulama) imza doğrulamadan geçti",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
 

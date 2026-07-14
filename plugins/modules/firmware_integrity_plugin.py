@@ -1,16 +1,25 @@
 """
 GÖKTÜRK — Firmware / Yazılım Bütünlüğü Test Modülü (R155 Kategori 6)
-Taktik: ECU'nun çalışan firmware/yazılımına iki senaryo uygular:
+Taktik: ECU'nun çalışan firmware/yazılımına üç senaryo uygular:
 
   - malicious_replace      → R155-6.1 (firmware değiştirme / zararlı kod)
   - integrity_check_bypass → R155-6.4 (yazılım bütünlüğü ihlali)
+  - secure_boot_bypass     → R155-6.13 (güvenli önyükleme atlatma)
 
-Bu iki vektör, profildeki `hpc_compute` bileşeninde başından beri
+İlk iki vektör, profildeki `hpc_compute` bileşeninde başından beri
 DEKLARE EDİLMİŞ ama hiçbir plugin tarafından test EDİLMEMİŞ durumdaydı
-(bkz. docs/coverage_roadmap.md) — bu modül o dürüst boşluğu kapatır.
+(bkz. docs/coverage_roadmap.md) — bu modül o dürüst boşluğu kapattı.
+
+Üçüncü senaryo (secure_boot_bypass), bu modülün kendi açıklamasının zaten
+"secure boot zincirinin etkinliğini test eder" dediği ama ayrı bir Finding
+üretmeyen bir boşluğu kapatır: integrity_check_bypass ÇALIŞMA ANINDAKİ
+periyodik bütünlük doğrulamasını (runtime attestation) test ederken,
+secure_boot_bypass SADECE önyükleme ZAMANINDAKİ ilk güven zinciri
+kurulumunu (bootloader → çekirdek → uygulama imza basamakları) hedefler —
+biri çalışırken sürekli izler, diğeri açılışta bir kerelik temeli kurar.
 
 Her zafiyetli senaryo, KENDİ R155 vektörüyle AYRI bir Finding olarak
-raporlanır (List[Finding]) — böylece her iki vektör de kapsam sayımına
+raporlanır (List[Finding]) — böylece her üç vektör de kapsam sayımına
 doğru şekilde yansır.
 """
 
@@ -40,6 +49,20 @@ _SCENARIOS = {
             "geçiş mekanizması tanımla."
         ),
     },
+    "secure_boot_bypass": {
+        "vector": "R155-6.13",
+        "label": "Güvenli önyükleme (Secure Boot) atlatma",
+        "impact_safety": "critical",
+        "cvss": 8.6,
+        "remediation": (
+            "1. Donanım kök-güvenli (hardware root-of-trust) bir secure boot "
+            "zinciri kur; bootloader, çekirdek ve uygulama katmanlarının HER "
+            "BİRİ bir öncekini imza ile doğrulamadan yürütülmesin. "
+            "2. Önyükleme sırasında herhangi bir doğrulama basamağının "
+            "atlanabildiği (ör. debug/fastboot modu, JTAG üzerinden bypass) "
+            "tüm yolları kapat veya üretim imajında devre dışı bırak."
+        ),
+    },
 }
 
 
@@ -54,9 +77,10 @@ class FirmwareIntegrityPlugin(BasePlugin):
     applicable_adapters = ["socketcan", "carla"]
     severity_hint = "critical"
     description = (
-        "ECU firmware'ine kötü niyetli değiştirme (R155-6.1) ve çalışma anı "
-        "bütünlük doğrulaması atlatma (R155-6.4) senaryolarını uygular; "
-        "secure boot zincirinin ve runtime attestation'ın etkinliğini test eder."
+        "ECU firmware'ine kötü niyetli değiştirme (R155-6.1), çalışma anı "
+        "bütünlük doğrulaması atlatma (R155-6.4) ve güvenli önyükleme "
+        "atlatma (R155-6.13) senaryolarını uygular; secure boot zincirinin "
+        "ve runtime attestation'ın etkinliğini test eder."
     )
 
     def run(self, component_config: dict):
@@ -98,7 +122,7 @@ class FirmwareIntegrityPlugin(BasePlugin):
                 status="not_vulnerable",
                 title="Firmware Bütünlüğü: Doğrulama korumaları aktif",
                 description=(
-                    "İki firmware bütünlük senaryosunun tamamı ilgili koruma "
+                    "Üç firmware bütünlük senaryosunun tamamı ilgili koruma "
                     "mekanizması tarafından engellendi:\n\n" + "\n".join(lines)
                 ),
                 attack_feasibility="high",
