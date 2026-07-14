@@ -36,6 +36,7 @@ from plugins.modules.ivi_pivot_plugin import IVIPivotPlugin
 from plugins.modules.telematics_channel_plugin import TelematicsChannelPlugin
 from plugins.modules.physical_ecu_access_plugin import PhysicalECUAccessPlugin
 from plugins.modules.external_device_access_plugin import ExternalDeviceAccessPlugin
+from plugins.modules.app_layer_plugin import AppLayerPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -310,6 +311,13 @@ def test_mock_external_device_probe_behaviour():
         assert _mock("vulnerable").external_device_probe("ivi_connectivity_hub", scn)["accepted"] is True
         assert _mock("secure").external_device_probe("ivi_connectivity_hub", scn)["accepted"] is False
         assert _mock("empty").external_device_probe("ivi_connectivity_hub", scn)["accepted"] is False
+
+
+def test_mock_app_layer_probe_behaviour():
+    for scn in ("mobile_app_insecure_api", "third_party_app_privilege_escape"):
+        assert _mock("vulnerable").app_layer_probe("connected_app_layer", scn)["accepted"] is True
+        assert _mock("secure").app_layer_probe("connected_app_layer", scn)["accepted"] is False
+        assert _mock("empty").app_layer_probe("connected_app_layer", scn)["accepted"] is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -671,6 +679,60 @@ def test_external_device_access_inconclusive_when_adapter_unsupported():
     assert f.status == "inconclusive"
 
 
+def test_app_layer_matrix():
+    vuln = AppLayerPlugin(_mock("vulnerable")).run({"id": "connected_app_layer"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
+    assert AppLayerPlugin(_mock("secure")).run({"id": "connected_app_layer"}).status == "not_vulnerable"
+    assert AppLayerPlugin(_mock("empty")).run({"id": "connected_app_layer"}).status == "not_vulnerable"
+
+
+def test_app_layer_vulnerable_returns_two_distinct_vectors():
+    findings = AppLayerPlugin(_mock("vulnerable")).run({"id": "connected_app_layer"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-5.10", "R155-5.9"]
+    categories = {f.r155_vector_id: f.r155_category for f in findings}
+    assert categories["R155-5.9"] == 5
+    assert categories["R155-5.10"] == 5
+    assert all(f.is_vulnerable() for f in findings)
+    mobile_finding = next(f for f in findings if f.r155_vector_id == "R155-5.9")
+    assert mobile_finding.impact_privacy == "high"
+    ivi_app_finding = next(f for f in findings if f.r155_vector_id == "R155-5.10")
+    assert ivi_app_finding.impact_operational == "high"
+
+
+def test_app_layer_lists_both_scenarios():
+    findings = AppLayerPlugin(_mock("vulnerable")).run({"id": "connected_app_layer"})
+    assert len(findings) == 2
+
+
+def test_app_layer_secure_reports_all_protected():
+    f = AppLayerPlugin(_mock("secure")).run({"id": "connected_app_layer"})
+    assert f.status == "not_vulnerable"
+    assert "korunuyor" in f.title.lower() or "korumal" in f.title.lower()
+
+
+def test_app_layer_inconclusive_when_adapter_unsupported():
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = AppLayerPlugin(bare).run({"id": "connected_app_layer"})
+    assert f.status == "inconclusive"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -686,7 +748,7 @@ def test_orchestrator_discovers_all_plugins():
             "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz", "ota-attack",
             "adversarial-ml", "backend-server", "diag-access-abuse",
             "debug-port-access", "firmware-integrity", "physical-ecu-access",
-            "external-device-access"} <= ids
+            "external-device-access", "app-layer"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):

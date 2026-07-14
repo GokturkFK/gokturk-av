@@ -381,3 +381,26 @@ class MockAdapter(BaseAdapter):
             "rogue_device_enrollment": "Yeni cihaz, operatör onayı/denetim adımı olmadan kalıcı kaydedildi",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def app_layer_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda mobil uygulama sertifika pinleme + kısa ömürlü token
+        # kullanır; IVI'deki 3. taraf uygulamalar sıkı sandbox/izin
+        # modeliyle sınırlıdır. vulnerable modda ikisi de yok/atlatılabilir.
+        if self.mode == "empty":
+            detail = {
+                "mobile_app_insecure_api": "Mobil API uç noktası erişilemez",
+                "third_party_app_privilege_escape": "IVI uygulama çatısı yanıt vermiyor",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "mobile_app_insecure_api": "Sertifika pinleme + kısa ömürlü token doğrulaması sahte isteği reddetti",
+                "third_party_app_privilege_escape": "Sandbox/izin modeli, tanınan kapsam dışındaki erişimi reddetti",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "mobile_app_insecure_api": "Sabit kodlanmış API anahtarı/pinlenmemiş sertifika ile sahte istek kabul edildi",
+            "third_party_app_privilege_escape": "3. taraf uygulama, tanınan izin kapsamının dışındaki araç verisine/fonksiyonuna erişti",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}

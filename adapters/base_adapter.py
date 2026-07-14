@@ -372,6 +372,46 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: external_device_probe desteklenmez")
 
+    # ── Bağlantılı Uygulama Katmanı (R155 Kat.5 — Dış Bağlanabilirlik) ────────
+
+    def app_layer_probe(self, target: str, scenario: str) -> Dict:
+        """Araçla/backend'le konuşan uygulama katmanının GÜVEN SINIRLARINI
+        iki farklı konumda test eder.
+
+        scenario:
+          - 'mobile_app_insecure_api'          : akıllı telefondaki refakatçi
+                                                  (companion) uygulamanın araç/
+                                                  backend API'siyle konuşurken
+                                                  kimlik doğrulama/token
+                                                  güvenliğinin (ör. sabit
+                                                  kodlanmış anahtar, sertifika
+                                                  pinleme eksikliği) yeterli
+                                                  olup olmadığını sınar
+                                                  (R155-5.9 bağlantılı mobil
+                                                  uygulama güvenlik açığı —
+                                                  araç DIŞINDAKİ uygulama)
+          - 'third_party_app_privilege_escape' : IVI (infotainment) üzerinde
+                                                  çalışan üçüncü taraf bir
+                                                  uygulamanın, kendisine
+                                                  tanınan izin/sandbox
+                                                  sınırının ÖTESİNDE araç
+                                                  verisine/fonksiyonuna
+                                                  erişip erişemediğini sınar
+                                                  (R155-5.10 üçüncü taraf IVI
+                                                  uygulaması zafiyeti — araç
+                                                  İÇİNDEKİ uygulama)
+
+        İkisi de "uygulama katmanı güveni" temasını paylaşır ama FARKLI
+        konumları hedefler: biri aracın dışındaki (telefon) uygulamanın
+        API'ye erişimini, diğeri aracın içindeki (IVI) uygulamanın kendi
+        sandbox sınırını aşıp aşamadığını test eder.
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → güven sınırı aşıldı = zafiyet
+          accepted=False → sınır/kontrol korundu
+        """
+        raise NotImplementedError(f"{self.adapter_type}: app_layer_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,

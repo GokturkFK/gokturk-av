@@ -1,6 +1,6 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **34/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **36/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -71,8 +71,8 @@
 | R155-5.6 | ROS2/DDS kimliksiz topic erişimi | ✅ Bitmiş |
 | R155-5.7 | ROS2/DDS mesaj enjeksiyonu | ✅ Bitmiş |
 | R155-5.8 | EV şarj kanalı saldırısı (ISO 15118) | 🔩 Donanım gerekli |
-| R155-5.9 | Bağlantılı mobil uygulama güvenlik açığı | 🔧 Yazılımla yapılabilir |
-| R155-5.10 | Üçüncü taraf IVI uygulaması zafiyeti | 🔧 Yazılımla yapılabilir |
+| R155-5.9 | Bağlantılı mobil uygulama güvenlik açığı | ✅ Bitmiş |
+| R155-5.10 | Üçüncü taraf IVI uygulaması zafiyeti | ✅ Bitmiş |
 | R155-5.11 | Araç-Bulut API yetkisiz erişimi | 🔧 Yazılımla yapılabilir |
 | R155-5.12 | V2I altyapısı üzerinden araç sistemlerine saldırı | ✅ Bitmiş |
 | R155-5.13 | Uzaktan telematik sisteme exploit ile erişim | ✅ Bitmiş |
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 34 |
-| 🔧 Yazılımla yapılabilir (kalan) | 21 |
+| ✅ Bitmiş | 36 |
+| 🔧 Yazılımla yapılabilir (kalan) | 19 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 34/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 36/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
