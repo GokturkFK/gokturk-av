@@ -217,6 +217,30 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: debug_port_probe desteklenmez")
 
+    def physical_ecu_access_probe(self, target: str, method: str = "enclosure_bypass") -> bool:
+        """Bir ECU/port'a (ör. OBD-II) izinsiz FİZİKSEL erişim dener.
+
+        Hem OBD-II/UDS protokol istismarından (R155-5.5, obd2-enum — mantıksal/
+        protokol katmanı, port elektroniği üzerinden yapılır) hem de donanım
+        debug arayüzü erişiminden (R155-7.4, debug-port-access — JTAG/UART gibi
+        AYRI bir arayüz) farklı olarak, bu metod portun/ECU'nun kendisinin
+        FİZİKSEL MUHAFAZA korumasını (kilit, mühür, gizli/erişilmesi zor montaj)
+        hedefler: kilit/mühür yoksa saldırgan port elektroniğini/protokolünü
+        hiç uğraşmadan doğrudan konnektör pinlerine veya kablo demetine erişip
+        (tap/splice) ECU ile doğrudan iletişim kurabilir.
+
+        method: 'enclosure_bypass' (port/ECU muhafazasının kilidi/mührü
+                atlatılıp fiziksel olarak açılır) |
+                'harness_tap'       (kablo demetine doğrudan splice/tap
+                yapılarak port elektroniği tamamen atlanır)
+
+        Dönüş: True → fiziksel erişim engellenmedi (kilit/mühür/koruma yok
+        veya atlatıldı) = zafiyet. False → fiziksel koruma erişimi engelledi.
+        """
+        raise NotImplementedError(
+            f"{self.adapter_type}: physical_ecu_access_probe desteklenmez"
+        )
+
     # ── Firmware / Yazılım Bütünlüğü (R155 Kat.6 — Veri ve Kod) ───────────────
 
     def firmware_integrity_probe(self, target: str, scenario: str) -> Dict:

@@ -34,6 +34,7 @@ from plugins.modules.remote_telematics_exploit_plugin import RemoteTelematicsExp
 from plugins.modules.can_dos_plugin import CANDosPlugin
 from plugins.modules.ivi_pivot_plugin import IVIPivotPlugin
 from plugins.modules.telematics_channel_plugin import TelematicsChannelPlugin
+from plugins.modules.physical_ecu_access_plugin import PhysicalECUAccessPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -294,6 +295,13 @@ def test_mock_debug_port_probe_behaviour():
     assert _mock("vulnerable").debug_port_probe("debug_ports") is True
     assert _mock("secure").debug_port_probe("debug_ports") is False
     assert _mock("empty").debug_port_probe("debug_ports") is False
+
+
+def test_mock_physical_ecu_access_probe_behaviour():
+    for method in ("enclosure_bypass", "harness_tap"):
+        assert _mock("vulnerable").physical_ecu_access_probe("obd2_port", method=method) is True
+        assert _mock("secure").physical_ecu_access_probe("obd2_port", method=method) is False
+        assert _mock("empty").physical_ecu_access_probe("obd2_port", method=method) is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -574,6 +582,27 @@ def test_debug_port_access_uart_config():
     assert "uart" in f.title.lower()
 
 
+def test_physical_ecu_access_matrix():
+    assert PhysicalECUAccessPlugin(_mock("vulnerable")).run({"id": "obd2_port"}).status == "vulnerable"
+    assert PhysicalECUAccessPlugin(_mock("secure")).run({"id": "obd2_port"}).status == "not_vulnerable"
+    assert PhysicalECUAccessPlugin(_mock("empty")).run({"id": "obd2_port"}).status == "not_vulnerable"
+
+
+def test_physical_ecu_access_carries_taxonomy():
+    f = PhysicalECUAccessPlugin(_mock("vulnerable")).run({"id": "obd2_port"})
+    assert f.r155_vector_id == "R155-7.1"
+    assert f.r155_category == 7
+    assert f.is_vulnerable()
+    assert f.attack_feasibility == "low"
+
+
+def test_physical_ecu_access_harness_tap_config():
+    plugin = PhysicalECUAccessPlugin(_mock("vulnerable"), config={"physical_access_method": "harness_tap"})
+    f = plugin.run({"id": "obd2_port"})
+    assert f.status == "vulnerable"
+    assert "splice" in f.title.lower() or "tap" in f.title.lower()
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -588,7 +617,7 @@ def test_orchestrator_discovers_all_plugins():
     assert {"can-replay", "can-fuzz", "ros2-topic-enum", "ros2-topic-injection",
             "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz", "ota-attack",
             "adversarial-ml", "backend-server", "diag-access-abuse",
-            "debug-port-access", "firmware-integrity"} <= ids
+            "debug-port-access", "firmware-integrity", "physical-ecu-access"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
