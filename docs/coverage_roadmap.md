@@ -1,6 +1,6 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **25/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **27/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -23,7 +23,7 @@
 
 | Vektör | Açıklama | Durum |
 |---|---|---|
-| R155-2.1 | Mesaj sahteciliği / spoofing | 🔧 Yazılımla yapılabilir |
+| R155-2.1 | Mesaj sahteciliği / spoofing | ✅ Bitmiş |
 | R155-2.2 | Mesaj enjeksiyonu (CAN, Ethernet) | ✅ Bitmiş |
 | R155-2.3 | Bilgi dinleme / sniffing | 🔧 Yazılımla yapılabilir |
 | R155-2.4 | Servis engelleme / DoS | ✅ Bitmiş |
@@ -74,7 +74,7 @@
 | R155-5.9 | Bağlantılı mobil uygulama güvenlik açığı | 🔧 Yazılımla yapılabilir |
 | R155-5.10 | Üçüncü taraf IVI uygulaması zafiyeti | 🔧 Yazılımla yapılabilir |
 | R155-5.11 | Araç-Bulut API yetkisiz erişimi | 🔧 Yazılımla yapılabilir |
-| R155-5.12 | V2I altyapısı üzerinden araç sistemlerine saldırı | 🔧 Yazılımla yapılabilir |
+| R155-5.12 | V2I altyapısı üzerinden araç sistemlerine saldırı | ✅ Bitmiş |
 | R155-5.13 | Uzaktan telematik sisteme exploit ile erişim | ✅ Bitmiş |
 
 ## Kategori 6 — Veri ve koda yönelik tehditler
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 25 |
-| 🔧 Yazılımla yapılabilir (kalan) | 30 |
+| ✅ Bitmiş | 27 |
+| 🔧 Yazılımla yapılabilir (kalan) | 28 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 25/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 27/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.

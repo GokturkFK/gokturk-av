@@ -239,6 +239,14 @@ def test_mock_v2x_injection_behaviour():
     assert _mock("secure").inject_v2x_message(signed=True) is True
 
 
+def test_mock_v2x_attack_probe_behaviour():
+    # vulnerable -> her senaryo accepted; secure -> hicbiri; empty -> yanitsiz
+    for scn in ("identity_spoof", "v2i_infra_trust"):
+        assert _mock("vulnerable").v2x_attack_probe("v2x_obu", scn)["accepted"] is True
+        assert _mock("secure").v2x_attack_probe("v2x_obu", scn)["accepted"] is False
+        assert _mock("empty").v2x_attack_probe("v2x_obu", scn)["accepted"] is False
+
+
 def test_mock_fuzz_ecu_behaviour():
     # vulnerable -> girdiler islenir + fault uretir; secure -> hepsi reddedilir; empty -> bos
     vuln = _mock("vulnerable").fuzz_ecu("hpc", mode="smart", count=100)
@@ -370,17 +378,26 @@ def test_lidar_spoof_remove_scenario_is_critical():
 
 
 def test_v2x_spoof_matrix():
-    assert V2XSpoofPlugin(_mock("vulnerable")).run({"id": "v2x_unit"}).status == "vulnerable"
+    vuln = V2XSpoofPlugin(_mock("vulnerable")).run({"id": "v2x_unit"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
     assert V2XSpoofPlugin(_mock("secure")).run({"id": "v2x_unit"}).status == "not_vulnerable"
     assert V2XSpoofPlugin(_mock("empty")).run({"id": "v2x_unit"}).status == "not_vulnerable"
 
 
-def test_v2x_spoof_carries_taxonomy_when_vulnerable():
-    f = V2XSpoofPlugin(_mock("vulnerable")).run({"id": "v2x_unit"})
-    assert f.r155_vector_id == "R155-2.7"
-    assert f.r155_category == 2
-    assert f.impact_safety == "high"
-    assert f.is_vulnerable()
+def test_v2x_spoof_vulnerable_returns_three_distinct_vectors():
+    findings = V2XSpoofPlugin(_mock("vulnerable")).run({"id": "v2x_obu"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-2.1", "R155-2.7", "R155-5.12"]
+    assert all(f.r155_category == 2 for f in findings)
+    assert all(f.is_vulnerable() for f in findings)
+    bsm_finding = next(f for f in findings if f.r155_vector_id == "R155-2.7")
+    assert bsm_finding.impact_safety == "high"
+
+
+def test_v2x_spoof_secure_reports_all_protected():
+    f = V2XSpoofPlugin(_mock("secure")).run({"id": "v2x_obu"})
+    assert f.status == "not_vulnerable"
+    assert "korumalı" in f.description.lower() or "reddedildi" in f.title.lower()
 
 
 def test_v2x_spoof_inconclusive_when_adapter_unsupported():
