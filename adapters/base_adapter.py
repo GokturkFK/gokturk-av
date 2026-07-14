@@ -105,6 +105,26 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: inject_v2x_message desteklenmez")
 
+    def v2x_attack_probe(self, target: str, scenario: str) -> Dict:
+        """V2X iletişim yığınına, imza eksikliğinden ayrı, ek saldırı senaryoları uygular.
+
+        scenario:
+          - 'identity_spoof'   : geçerli görünen ama başka bir meşru katılımcının
+                                 (ör. komşu araç/RSU) kimliğini/sertifikasını taklit
+                                 eden bir mesaj gönderir — imza VAR ama kimlik sahte
+                                 (R155-2.1 genel mesaj sahteciliği/spoofing)
+          - 'v2i_infra_trust'  : ele geçirilmiş/sahte bir yol kenarı birimi (RSU) gibi
+                                 davranarak araca yetkisiz komut/veri (ör. sahte hız
+                                 sınırı, sahte sinyal durumu) enjekte etmeyi dener
+                                 (R155-5.12 V2I altyapısı üzerinden araç sistemlerine
+                                 saldırı)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → saldırı başarılı (koruma yok) = zafiyet
+          accepted=False → koruma mekanizması engelledi
+        """
+        raise NotImplementedError(f"{self.adapter_type}: v2x_attack_probe desteklenmez")
+
     # ── ECU / Firmware Fuzzing ────────────────────────────────────────────────
 
     def fuzz_ecu(self, target_ecu: str, mode: str = "smart", count: int = 200) -> list:

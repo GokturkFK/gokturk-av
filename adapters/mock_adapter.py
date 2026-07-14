@@ -181,6 +181,28 @@ class MockAdapter(BaseAdapter):
             return False  # V2X yığını yanıt vermiyor
         return self.mode == "vulnerable"
 
+    def v2x_attack_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda kimlik/sertifika çapraz doğrulaması + RSU güven listesi aktif.
+        # vulnerable modda ikisi de yok. empty modda V2X yığını yanıtsız (korumalı sayılır).
+        if self.mode == "empty":
+            detail = {
+                "identity_spoof": "V2X yığını yanıt vermiyor",
+                "v2i_infra_trust": "V2I kanalı erişilemez",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "identity_spoof": "Sertifika/kimlik çapraz doğrulaması taklit edilen kimliği reddetti",
+                "v2i_infra_trust": "RSU güven listesi doğrulaması yetkisiz altyapı komutunu reddetti",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "identity_spoof": "Taklit edilen kimlikle gönderilen mesaj meşru kabul edildi",
+            "v2i_infra_trust": "Sahte RSU'dan gelen yetkisiz komut (hız/sinyal) doğrudan uygulandı",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}
+
     def fuzz_ecu(self, target_ecu: str, mode: str = "smart", count: int = 200) -> List[Dict]:
         if self.mode == "empty":
             return []  # ECU yanıt vermiyor / erişilemez
