@@ -516,6 +516,39 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: comm_interception_probe desteklenmez")
 
+    # ── Firmware Çıkarma / Tersine Mühendislik (R155 Kat.6 — Veri ve Kod) ─────
+
+    def firmware_extraction_probe(self, target: str, scenario: str) -> Dict:
+        """ECU firmware imajından SIR (kriptografik anahtar) ve MANTIK
+        (çalışan kod) çıkarılabilirliğini iki farklı açıdan test eder.
+
+        scenario:
+          - 'key_extraction'               : firmware/flash bellekte saklanan
+                                              kriptografik anahtarların HSM/
+                                              secure element olmadan bellek
+                                              dökümüyle çıkarılabilmesini sınar
+                                              (R155-6.2 kriptografik anahtar
+                                              çalma)
+          - 'firmware_reverse_engineering'  : firmware imajının kendisinin
+                                              şifreleme/gizleme olmadan
+                                              dökülüp disassemble/decompile
+                                              edilerek tescilli mantığın
+                                              ortaya çıkarılabilmesini sınar
+                                              (R155-6.5 ECU firmware tersine
+                                              mühendislik)
+
+        Firmware Integrity (R155-6.1/6.4/6.13) firmware'in ÇALIŞMA ANINDA
+        DEĞİŞTİRİLİP DEĞİŞTİRİLEMEDİĞİNİ (bütünlük) test ederken, bu metod
+        firmware'İN İÇİNDEKİ SIRLARIN ve MANTIĞIN çıkarılabilir olup
+        olmadığını (gizlilik) test eder.
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → çıkarma başarılı (koruma yok) = zafiyet
+          accepted=False → ilgili koruma (HSM/secure element veya firmware
+          şifreleme) etkili
+        """
+        raise NotImplementedError(f"{self.adapter_type}: firmware_extraction_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,

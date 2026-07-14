@@ -39,6 +39,7 @@ from plugins.modules.external_device_access_plugin import ExternalDeviceAccessPl
 from plugins.modules.app_layer_plugin import AppLayerPlugin
 from plugins.modules.personal_data_plugin import PersonalDataPlugin
 from plugins.modules.comm_interception_plugin import CommInterceptionPlugin
+from plugins.modules.firmware_extraction_plugin import FirmwareExtractionPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -336,6 +337,13 @@ def test_mock_comm_interception_probe_behaviour():
         assert _mock("vulnerable").comm_interception_probe("gateway_ecu", scn)["accepted"] is True
         assert _mock("secure").comm_interception_probe("gateway_ecu", scn)["accepted"] is False
         assert _mock("empty").comm_interception_probe("gateway_ecu", scn)["accepted"] is False
+
+
+def test_mock_firmware_extraction_probe_behaviour():
+    for scn in ("key_extraction", "firmware_reverse_engineering"):
+        assert _mock("vulnerable").firmware_extraction_probe("hpc_compute", scn)["accepted"] is True
+        assert _mock("secure").firmware_extraction_probe("hpc_compute", scn)["accepted"] is False
+        assert _mock("empty").firmware_extraction_probe("hpc_compute", scn)["accepted"] is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -864,6 +872,58 @@ def test_comm_interception_inconclusive_when_adapter_unsupported():
     assert f.status == "inconclusive"
 
 
+def test_firmware_extraction_matrix():
+    vuln = FirmwareExtractionPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
+    assert FirmwareExtractionPlugin(_mock("secure")).run({"id": "hpc_compute"}).status == "not_vulnerable"
+    assert FirmwareExtractionPlugin(_mock("empty")).run({"id": "hpc_compute"}).status == "not_vulnerable"
+
+
+def test_firmware_extraction_vulnerable_returns_two_distinct_vectors():
+    findings = FirmwareExtractionPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-6.2", "R155-6.5"]
+    assert all(f.r155_category == 6 for f in findings)
+    assert all(f.is_vulnerable() for f in findings)
+    key_finding = next(f for f in findings if f.r155_vector_id == "R155-6.2")
+    assert key_finding.impact_safety == "high"
+    re_finding = next(f for f in findings if f.r155_vector_id == "R155-6.5")
+    assert re_finding.impact_safety == "medium"
+
+
+def test_firmware_extraction_lists_both_scenarios():
+    findings = FirmwareExtractionPlugin(_mock("vulnerable")).run({"id": "hpc_compute"})
+    assert len(findings) == 2
+
+
+def test_firmware_extraction_secure_reports_all_protected():
+    f = FirmwareExtractionPlugin(_mock("secure")).run({"id": "hpc_compute"})
+    assert f.status == "not_vulnerable"
+    assert "korumal" in f.title.lower() or "aktif" in f.title.lower()
+
+
+def test_firmware_extraction_inconclusive_when_adapter_unsupported():
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = FirmwareExtractionPlugin(bare).run({"id": "hpc_compute"})
+    assert f.status == "inconclusive"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -880,7 +940,7 @@ def test_orchestrator_discovers_all_plugins():
             "adversarial-ml", "backend-server", "diag-access-abuse",
             "debug-port-access", "firmware-integrity", "physical-ecu-access",
             "external-device-access", "app-layer", "personal-data-protection",
-            "comm-interception"} <= ids
+            "comm-interception", "firmware-extraction"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
