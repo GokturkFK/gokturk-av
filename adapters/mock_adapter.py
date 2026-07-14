@@ -286,6 +286,14 @@ class MockAdapter(BaseAdapter):
             return False  # arayüz fiziksel olarak mevcut değil/erişilemez
         return self.mode == "vulnerable"
 
+    def physical_ecu_access_probe(self, target: str, method: str = "enclosure_bypass") -> bool:
+        # secure modda muhafaza kilitli/mühürlü ve kablo demeti korumalı —
+        # fiziksel erişim engellenir. vulnerable modda kilit/mühür yok veya
+        # kablo demeti açıkta, doğrudan erişim mümkün.
+        if self.mode == "empty":
+            return False  # hedef fiziksel olarak mevcut değil/test edilemedi
+        return self.mode == "vulnerable"
+
     def firmware_integrity_probe(self, target: str, scenario: str) -> Dict:
         # secure modda secure boot zinciri + çalışma anı bütünlük doğrulaması
         # aktif. vulnerable modda ikisi de yok/atlatılabilir.
