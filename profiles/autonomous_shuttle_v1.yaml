@@ -147,6 +147,15 @@ components:
     networks: []
     test_status: "not_tested"
 
+  - id: "passenger_data_store"
+    label: "Yolcu Kişisel Veri Deposu"
+    category: "data"
+    position_3d: [-0.8, 1.2, 0.4]
+    attack_surfaces: ["data", "telematics"]
+    r155_vectors: ["R155-6.3", "R155-6.10"]
+    networks: []
+    test_status: "not_tested"
+
   # ── Fiziksel / Donanım ──────────────────────────────────────────────────
   - id: "debug_ports"
     label: "Debug Portları (JTAG/UART)"

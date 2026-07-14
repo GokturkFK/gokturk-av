@@ -412,6 +412,45 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: app_layer_probe desteklenmez")
 
+    # ── Araç İçi Kişisel Veri (R155 Kat.6 — Veri ve Kod) ──────────────────────
+
+    def personal_data_probe(self, target: str, scenario: str) -> Dict:
+        """Araç içinde toplanan/saklanan kişisel verinin (yolcu geçmişi,
+        eşleştirilmiş cihaz bilgisi, konum geçmişi vb.) TRANSIT ve AT-REST
+        koruma durumunu iki farklı açıdan test eder.
+
+        scenario:
+          - 'telemetry_data_leak'             : backend'e gönderilen telemetri/
+                                                  log akışının, anonimleştirme/
+                                                  veri minimizasyonu olmadan
+                                                  kişisel veri (PII) içerip
+                                                  içermediğini sınar — TRANSIT
+                                                  (aktarım sırasında sızıntı)
+                                                  (R155-6.3 kişisel veri
+                                                  sızdırma)
+          - 'local_storage_unauthorized_access' : araç içinde yerel olarak
+                                                  saklanan kişisel verinin
+                                                  (yolculuk geçmişi, eşleştirilmiş
+                                                  cihaz kayıtları vb.) şifreleme/
+                                                  erişim kontrolü olmadan yerel
+                                                  erişimi olan biri tarafından
+                                                  okunup okunamadığını sınar —
+                                                  AT-REST (durağan veri)
+                                                  (R155-6.10 araç içinde
+                                                  saklanan kişisel veriye
+                                                  yetkisiz erişim)
+
+        İkisi de "kişisel veri koruması" temasını paylaşır ama FARKLI bir
+        veri durumunu (data state) hedefler: biri verinin AKTARILIRKEN,
+        diğeri verinin DURURKEN korunup korunmadığını sınar.
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → veri korumasız açığa çıktı = zafiyet
+          accepted=False → ilgili koruma (minimizasyon veya şifreleme/erişim
+          kontrolü) etkili
+        """
+        raise NotImplementedError(f"{self.adapter_type}: personal_data_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,

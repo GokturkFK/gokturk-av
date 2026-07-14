@@ -404,3 +404,26 @@ class MockAdapter(BaseAdapter):
             "third_party_app_privilege_escape": "3. taraf uygulama, tanınan izin kapsamının dışındaki araç verisine/fonksiyonuna erişti",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def personal_data_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda telemetri veri minimizasyonu/anonimleştirme uygular ve
+        # yerel depo şifreleme + erişim kontrolü ile korunur. vulnerable
+        # modda ikisi de yok. empty modda hedef erişilemez (korumalı sayılır).
+        if self.mode == "empty":
+            detail = {
+                "telemetry_data_leak": "Telemetri akışı erişilemez",
+                "local_storage_unauthorized_access": "Yerel depo erişilemez",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "telemetry_data_leak": "Telemetri veri minimizasyonu/anonimleştirme PII alanlarını temizledi",
+                "local_storage_unauthorized_access": "Yerel depo şifreleme + erişim kontrolü ile korunuyor",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "telemetry_data_leak": "Backend'e gönderilen telemetri akışında anonimleştirilmemiş konum/kimlik verisi bulundu",
+            "local_storage_unauthorized_access": "Yerel depoda şifrelenmemiş yolculuk geçmişi/eşleştirilmiş cihaz verisi doğrudan okunabildi",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}

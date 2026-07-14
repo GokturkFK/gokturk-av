@@ -37,6 +37,7 @@ from plugins.modules.telematics_channel_plugin import TelematicsChannelPlugin
 from plugins.modules.physical_ecu_access_plugin import PhysicalECUAccessPlugin
 from plugins.modules.external_device_access_plugin import ExternalDeviceAccessPlugin
 from plugins.modules.app_layer_plugin import AppLayerPlugin
+from plugins.modules.personal_data_plugin import PersonalDataPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -318,6 +319,13 @@ def test_mock_app_layer_probe_behaviour():
         assert _mock("vulnerable").app_layer_probe("connected_app_layer", scn)["accepted"] is True
         assert _mock("secure").app_layer_probe("connected_app_layer", scn)["accepted"] is False
         assert _mock("empty").app_layer_probe("connected_app_layer", scn)["accepted"] is False
+
+
+def test_mock_personal_data_probe_behaviour():
+    for scn in ("telemetry_data_leak", "local_storage_unauthorized_access"):
+        assert _mock("vulnerable").personal_data_probe("passenger_data_store", scn)["accepted"] is True
+        assert _mock("secure").personal_data_probe("passenger_data_store", scn)["accepted"] is False
+        assert _mock("empty").personal_data_probe("passenger_data_store", scn)["accepted"] is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -733,6 +741,59 @@ def test_app_layer_inconclusive_when_adapter_unsupported():
     assert f.status == "inconclusive"
 
 
+def test_personal_data_matrix():
+    vuln = PersonalDataPlugin(_mock("vulnerable")).run({"id": "passenger_data_store"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
+    assert PersonalDataPlugin(_mock("secure")).run({"id": "passenger_data_store"}).status == "not_vulnerable"
+    assert PersonalDataPlugin(_mock("empty")).run({"id": "passenger_data_store"}).status == "not_vulnerable"
+
+
+def test_personal_data_vulnerable_returns_two_distinct_vectors():
+    findings = PersonalDataPlugin(_mock("vulnerable")).run({"id": "passenger_data_store"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-6.10", "R155-6.3"]
+    assert all(f.r155_category == 6 for f in findings)
+    assert all(f.is_vulnerable() for f in findings)
+    assert all(f.impact_privacy == "high" for f in findings)
+    transit_finding = next(f for f in findings if f.r155_vector_id == "R155-6.3")
+    assert "telemetri" in transit_finding.title.lower()
+    at_rest_finding = next(f for f in findings if f.r155_vector_id == "R155-6.10")
+    assert "yerel" in at_rest_finding.title.lower()
+
+
+def test_personal_data_lists_both_scenarios():
+    findings = PersonalDataPlugin(_mock("vulnerable")).run({"id": "passenger_data_store"})
+    assert len(findings) == 2
+
+
+def test_personal_data_secure_reports_all_protected():
+    f = PersonalDataPlugin(_mock("secure")).run({"id": "passenger_data_store"})
+    assert f.status == "not_vulnerable"
+    assert "korumal" in f.title.lower() or "aktif" in f.title.lower()
+
+
+def test_personal_data_inconclusive_when_adapter_unsupported():
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = PersonalDataPlugin(bare).run({"id": "passenger_data_store"})
+    assert f.status == "inconclusive"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -748,7 +809,7 @@ def test_orchestrator_discovers_all_plugins():
             "gps-spoof", "obd2-enum", "lidar-spoof", "v2x-spoof", "ecu-fuzz", "ota-attack",
             "adversarial-ml", "backend-server", "diag-access-abuse",
             "debug-port-access", "firmware-integrity", "physical-ecu-access",
-            "external-device-access", "app-layer"} <= ids
+            "external-device-access", "app-layer", "personal-data-protection"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
