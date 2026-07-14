@@ -107,7 +107,7 @@ components:
     category: "connectivity"
     position_3d: [0.0, 2.4, 0.2]
     attack_surfaces: ["telematics", "cellular", "ota"]
-    r155_vectors: ["R155-1.1", "R155-1.2", "R155-1.3", "R155-1.4", "R155-1.5", "R155-5.1", "R155-5.13", "R155-3.4", "R155-3.5", "R155-3.6"]
+    r155_vectors: ["R155-1.1", "R155-1.2", "R155-1.3", "R155-1.4", "R155-1.5", "R155-5.1", "R155-5.11", "R155-5.13", "R155-3.4", "R155-3.5", "R155-3.6"]
     networks: ["vcan0"]
     test_status: "not_tested"
 

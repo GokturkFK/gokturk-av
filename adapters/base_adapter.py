@@ -601,6 +601,30 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: human_factor_probe desteklenmez")
 
+    # ── Araç-Bulut API (R155 Kat.5 — Dış Bağlanabilirlik) ─────────────────────
+
+    def cloud_api_probe(self, target: str, method: str = "cross_vehicle_bola") -> bool:
+        """Aracın bulut/backend API'siyle konuşurken NESNE DÜZEYİNDE
+        yetkilendirme (object-level authorization) sınırını test eder.
+
+        Backend Server modülünün weak_auth senaryosu (R155-1.1) personel/
+        yönetici erişimini hedeflerken, bu metod ARAÇ-BULUT (machine-to-
+        machine) API'sinin kendisini hedefler: geçerli bir aracın kimlik
+        bilgileriyle BAŞKA bir aracın verisine/komutuna erişilip
+        erişilemediğini sınar.
+
+        method: 'cross_vehicle_bola'         (bir aracın kimlik bilgileriyle
+                başka bir aracın kayıtlarına/telemetrisine erişim — Broken
+                Object Level Authorization) |
+                'unauthenticated_device_binding' (API, isteğin GERÇEKTEN o
+                araca ait bir cihaz sertifikasından geldiğini doğrulamadan
+                araç-kapsamlı uç noktalara erişime izin verir)
+
+        Dönüş: True → yetkisiz erişim başarılı (koruma yok) = zafiyet.
+        False → nesne düzeyinde yetkilendirme/cihaz kimlik bağlaması etkili.
+        """
+        raise NotImplementedError(f"{self.adapter_type}: cloud_api_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,

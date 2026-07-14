@@ -508,3 +508,11 @@ class MockAdapter(BaseAdapter):
             "operator_misconfiguration_unchecked": "Operatörün güvenlik duvarı/loglama değişikliği inceleme olmadan doğrudan uygulandı",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def cloud_api_probe(self, target: str, method: str = "cross_vehicle_bola") -> bool:
+        # secure modda nesne düzeyinde yetkilendirme + cihaz sertifika
+        # bağlaması aktif. vulnerable modda ikisi de yok. empty modda API
+        # erişilemez (korumalı sayılır).
+        if self.mode == "empty":
+            return False
+        return self.mode == "vulnerable"
