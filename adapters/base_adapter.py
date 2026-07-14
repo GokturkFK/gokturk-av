@@ -173,6 +173,13 @@ class BaseAdapter(ABC):
                           (R155-1.1 yetkisiz uzaktan sunucu erişimi)
           - 'dos'       : sunucuyu yüksek istek hacmiyle yorar
                           (R155-1.5 backend DoS)
+          - 'supply_chain_compromise' : backend'in dağıtım/derleme hattına
+                          (CI/CD) doğrulanmamış/imzasız bir üçüncü taraf
+                          bağımlılık (paket/kütüphane/konteyner imajı)
+                          enjekte etmeyi dener — 'weak_auth'dan FARKLI olarak
+                          burada saldırgan sunucuya doğrudan erişmiyor,
+                          sunucunun GÜVENDİĞİ tedarik zincirini hedefliyor
+                          (R155-1.4 tedarik zinciri saldırısı — backend)
 
         Dönüş: {'accepted': bool, 'detail': str}
           accepted=True → saldırı başarılı (koruma yok) = zafiyet

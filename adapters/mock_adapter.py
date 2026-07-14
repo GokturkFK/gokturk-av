@@ -261,12 +261,14 @@ class MockAdapter(BaseAdapter):
             detail = {
                 "weak_auth": "Çok faktörlü kimlik doğrulama zayıf/varsayılan girişi reddetti",
                 "dos": "Hız sınırlama (rate limiting) yüksek istek hacmini engelledi",
+                "supply_chain_compromise": "CI/CD hattı imzasız/doğrulanmamış bağımlılığı reddetti",
             }.get(scenario, "Koruma aktif")
             return {"accepted": False, "detail": detail}
         # vulnerable
         detail = {
             "weak_auth": "Varsayılan/zayıf kimlik bilgileriyle yönetim paneline erişildi",
             "dos": "Sunucu yüksek istek hacmi altında yanıt vermemeye başladı",
+            "supply_chain_compromise": "İmzasız/doğrulanmamış üçüncü taraf bağımlılık CI/CD hattına sorgusuz kabul edildi",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
 
