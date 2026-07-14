@@ -1,6 +1,6 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **49/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **50/69** vektör kapsanmış.
 
 ## Üç kategori
 
@@ -73,7 +73,7 @@
 | R155-5.8 | EV şarj kanalı saldırısı (ISO 15118) | 🔩 Donanım gerekli |
 | R155-5.9 | Bağlantılı mobil uygulama güvenlik açığı | ✅ Bitmiş |
 | R155-5.10 | Üçüncü taraf IVI uygulaması zafiyeti | ✅ Bitmiş |
-| R155-5.11 | Araç-Bulut API yetkisiz erişimi | 🔧 Yazılımla yapılabilir |
+| R155-5.11 | Araç-Bulut API yetkisiz erişimi | ✅ Bitmiş |
 | R155-5.12 | V2I altyapısı üzerinden araç sistemlerine saldırı | ✅ Bitmiş |
 | R155-5.13 | Uzaktan telematik sisteme exploit ile erişim | ✅ Bitmiş |
 
@@ -117,10 +117,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 49 |
-| 🔧 Yazılımla yapılabilir (kalan) | 6 |
+| ✅ Bitmiş | 50 |
+| 🔧 Yazılımla yapılabilir (kalan) | 5 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 49/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 50/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.

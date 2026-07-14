@@ -41,6 +41,7 @@ from plugins.modules.personal_data_plugin import PersonalDataPlugin
 from plugins.modules.comm_interception_plugin import CommInterceptionPlugin
 from plugins.modules.firmware_extraction_plugin import FirmwareExtractionPlugin
 from plugins.modules.human_factor_plugin import HumanFactorPlugin
+from plugins.modules.cloud_api_plugin import CloudAPIPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -352,6 +353,13 @@ def test_mock_human_factor_probe_behaviour():
         assert _mock("vulnerable").human_factor_probe("fleet_operations_security", scn)["accepted"] is True
         assert _mock("secure").human_factor_probe("fleet_operations_security", scn)["accepted"] is False
         assert _mock("empty").human_factor_probe("fleet_operations_security", scn)["accepted"] is False
+
+
+def test_mock_cloud_api_probe_behaviour():
+    for method in ("cross_vehicle_bola", "unauthenticated_device_binding"):
+        assert _mock("vulnerable").cloud_api_probe("telematics_module", method=method) is True
+        assert _mock("secure").cloud_api_probe("telematics_module", method=method) is False
+        assert _mock("empty").cloud_api_probe("telematics_module", method=method) is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -986,6 +994,27 @@ def test_human_factor_inconclusive_when_adapter_unsupported():
     assert f.status == "inconclusive"
 
 
+def test_cloud_api_matrix():
+    assert CloudAPIPlugin(_mock("vulnerable")).run({"id": "telematics_module"}).status == "vulnerable"
+    assert CloudAPIPlugin(_mock("secure")).run({"id": "telematics_module"}).status == "not_vulnerable"
+    assert CloudAPIPlugin(_mock("empty")).run({"id": "telematics_module"}).status == "not_vulnerable"
+
+
+def test_cloud_api_carries_taxonomy():
+    f = CloudAPIPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
+    assert f.r155_vector_id == "R155-5.11"
+    assert f.r155_category == 5
+    assert f.is_vulnerable()
+    assert f.impact_privacy == "high"
+
+
+def test_cloud_api_device_binding_config():
+    plugin = CloudAPIPlugin(_mock("vulnerable"), config={"cloud_api_method": "unauthenticated_device_binding"})
+    f = plugin.run({"id": "telematics_module"})
+    assert f.status == "vulnerable"
+    assert "sertifika" in f.title.lower() or "binding" in f.title.lower() or "bağlama" in f.title.lower()
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -1002,7 +1031,8 @@ def test_orchestrator_discovers_all_plugins():
             "adversarial-ml", "backend-server", "diag-access-abuse",
             "debug-port-access", "firmware-integrity", "physical-ecu-access",
             "external-device-access", "app-layer", "personal-data-protection",
-            "comm-interception", "firmware-extraction", "human-factor"} <= ids
+            "comm-interception", "firmware-extraction", "human-factor",
+            "cloud-api-access"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):
