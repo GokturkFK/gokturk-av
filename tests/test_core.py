@@ -33,6 +33,7 @@ from plugins.modules.firmware_integrity_plugin import FirmwareIntegrityPlugin
 from plugins.modules.remote_telematics_exploit_plugin import RemoteTelematicsExploitPlugin
 from plugins.modules.can_dos_plugin import CANDosPlugin
 from plugins.modules.ivi_pivot_plugin import IVIPivotPlugin
+from plugins.modules.telematics_channel_plugin import TelematicsChannelPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -1137,3 +1138,33 @@ def test_ivi_pivot_in_discovery():
     orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
     ids = {c.module_id for c in orch.discover_plugin_classes()}
     assert "ivi-pivot" in ids
+# ── Mock: telematics_channel_probe davranışı ────────────────────────────────────
+
+def test_mock_telematics_channel_probe_behaviour():
+    assert _mock("vulnerable").telematics_channel_probe("telematics_module") is True
+    assert _mock("secure").telematics_channel_probe("telematics_module") is False
+    assert _mock("empty").telematics_channel_probe("telematics_module") is False
+
+
+# ── Telematics Channel Plugin ────────────────────────────────────────────────────
+
+def test_telematics_channel_matrix():
+    assert TelematicsChannelPlugin(_mock("vulnerable")).run({"id": "telematics_module"}).status == "vulnerable"
+    assert TelematicsChannelPlugin(_mock("secure")).run({"id": "telematics_module"}).status == "not_vulnerable"
+    assert TelematicsChannelPlugin(_mock("empty")).run({"id": "telematics_module"}).status == "not_vulnerable"
+
+
+def test_telematics_channel_carries_taxonomy():
+    f = TelematicsChannelPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
+    assert f.r155_vector_id == "R155-5.1"
+    assert f.r155_category == 5
+    assert f.impact_privacy == "high"
+    assert f.is_vulnerable()
+
+
+def test_telematics_channel_in_discovery():
+    from core.orchestrator import Orchestrator
+    from adapters.mock_adapter import MockAdapter
+    orch = Orchestrator(MockAdapter({"mode": "vulnerable"}), None, strict_adapter=False)
+    ids = {c.module_id for c in orch.discover_plugin_classes()}
+    assert "telematics-channel" in ids
