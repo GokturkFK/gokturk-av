@@ -138,6 +138,15 @@ components:
     networks: []
     test_status: "not_tested"
 
+  - id: "connected_app_layer"
+    label: "Bağlantılı Uygulama Katmanı (Mobil + IVI 3.taraf)"
+    category: "ivi"
+    position_3d: [-1.0, 1.5, 0.5]
+    attack_surfaces: ["ivi", "mobile-app"]
+    r155_vectors: ["R155-5.9", "R155-5.10"]
+    networks: []
+    test_status: "not_tested"
+
   # ── Fiziksel / Donanım ──────────────────────────────────────────────────
   - id: "debug_ports"
     label: "Debug Portları (JTAG/UART)"
