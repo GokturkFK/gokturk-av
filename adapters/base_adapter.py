@@ -660,6 +660,49 @@ class BaseAdapter(ABC):
         """
         raise NotImplementedError(f"{self.adapter_type}: wireless_rf_probe desteklenmez")
 
+    # ── Sistem Bütünlüğü ve İzolasyon (R155 Kat.6 — Veri ve Kod) ──────────────
+
+    def system_integrity_probe(self, target: str, scenario: str) -> Dict:
+        """Compute platformunun bütünlük ve izolasyon sınırlarını ÜÇ farklı
+        açıdan test eder.
+
+        scenario:
+          - 'edr_tampering'                    : olay veri kaydının (EDR/
+                                                  kara kutu — kaza öncesi/
+                                                  sonrası telemetri) yazıldıktan
+                                                  SONRA değiştirilip
+                                                  silinemeyeceğini (write-once/
+                                                  kurcalama-belirgin depolama)
+                                                  sınar (R155-6.11 olay veri
+                                                  kaydı manipülasyonu)
+          - 'third_party_component_supply_chain' : araç içi yazılım yığınına
+                                                  giren üçüncü taraf bir
+                                                  kütüphane/bileşenin imza/
+                                                  SBOM doğrulaması olmadan
+                                                  kabul edilip edilmediğini
+                                                  sınar — Firmware Integrity
+                                                  modülünün (R155-6.1) AKTİF
+                                                  firmware DEĞİŞTİRME saldırısından
+                                                  FARKLI olarak, bu BUILD/
+                                                  BAĞIMLILIK zincirindeki
+                                                  doğrulama eksikliğini hedefler
+                                                  (R155-6.12 tedarik zinciri
+                                                  yazılım saldırısı — üçüncü
+                                                  taraf bileşen)
+          - 'hypervisor_container_escape'      : izole bir konteyner/VM
+                                                  içinde çalışan bir sürecin,
+                                                  host sisteme veya başka bir
+                                                  konteynere KAÇIP kaçamadığını
+                                                  sınar (R155-6.14 hipervizör/
+                                                  konteyner ortamından kaçış)
+
+        Dönüş: {'accepted': bool, 'detail': str}
+          accepted=True → saldırı başarılı (koruma yok) = zafiyet
+          accepted=False → ilgili koruma (kurcalama-belirgin depolama, SBOM
+          doğrulama veya izolasyon sınırı) etkili
+        """
+        raise NotImplementedError(f"{self.adapter_type}: system_integrity_probe desteklenmez")
+
     def get_info(self) -> Dict[str, Any]:
         return {
             "adapter_type": self.adapter_type,

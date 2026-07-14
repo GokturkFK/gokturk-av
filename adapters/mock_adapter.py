@@ -539,3 +539,30 @@ class MockAdapter(BaseAdapter):
             "dsrc_protocol_exploit": "Hatalı biçimlendirilmiş DSRC/802.11p çerçevesi OBU'da DoS/kararsızlığa yol açtı",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def system_integrity_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda EDR write-once/kurcalama-belirgin depolama + SBOM
+        # doğrulama + hipervizör/konteyner izolasyonu hepsi devrede.
+        # vulnerable modda üçü de yok/atlanabilir. empty modda hedef
+        # erişilemez (korumalı sayılır).
+        if self.mode == "empty":
+            detail = {
+                "edr_tampering": "EDR/kara kutu deposu erişilemez",
+                "third_party_component_supply_chain": "Yazılım bağımlılık kaydı erişilemez",
+                "hypervisor_container_escape": "Hipervizör/konteyner ortamı erişilemez",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "edr_tampering": "Write-once/kurcalama-belirgin depolama, kayıt sonrası değişikliği engelledi",
+                "third_party_component_supply_chain": "SBOM/imza doğrulaması doğrulanmamış bağımlılığı reddetti",
+                "hypervisor_container_escape": "Hipervizör/konteyner izolasyon sınırı kaçış girişimini engelledi",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "edr_tampering": "EDR/kara kutu kaydı yazıldıktan sonra değiştirilebildi/silinebildi",
+            "third_party_component_supply_chain": "İmzasız/doğrulanmamış üçüncü taraf bileşen araç yazılım yığınına sorgusuz dahil edildi",
+            "hypervisor_container_escape": "İzole konteynerden host sistemine/başka bir konteynere kaçış başarılı oldu",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}

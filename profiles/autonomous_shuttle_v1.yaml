@@ -49,8 +49,8 @@ components:
     label: "HPC / Compute Unit"
     category: "compute"
     position_3d: [0.0, 0.3, 0.3]
-    attack_surfaces: ["ros2-dds", "firmware", "os"]
-    r155_vectors: ["R155-6.1", "R155-6.2", "R155-6.4", "R155-6.5", "R155-6.8", "R155-6.9", "R155-6.13", "R155-5.6", "R155-5.7"]
+    attack_surfaces: ["ros2-dds", "firmware", "os", "data"]
+    r155_vectors: ["R155-6.1", "R155-6.2", "R155-6.4", "R155-6.5", "R155-6.8", "R155-6.9", "R155-6.11", "R155-6.12", "R155-6.13", "R155-6.14", "R155-5.6", "R155-5.7"]
     networks: ["ros2_default", "vcan0"]
     test_status: "not_tested"
 

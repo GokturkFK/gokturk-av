@@ -1,6 +1,8 @@
 # UN R155 Annex 5 — Kapsam Yol Haritası
 
-> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **52/69** vektör kapsanmış.
+> Otomatik üretilmedi ama gerçek orchestrator çıktısından (mock adaptör, vulnerable mod) türetilmiştir — varsayım yok, sadece kod çalıştırılıp sonuç ölçülmüştür. Güncel toplam: **55/69** vektör kapsanmış.
+
+> 🎉 **YAZILIMLA ULAŞILABİLİR TÜM VEKTÖRLER (55/55) TAMAMLANDI.** Kalan 14 vektör, gerçek fiziksel donanım/lab ekipmanı gerektirir ve ayrı bir faz olarak ele alınacaktır.
 
 ## Üç kategori
 
@@ -91,10 +93,10 @@
 | R155-6.8 | Arabellek taşması / bellek bozulması istismarı | ✅ Bitmiş |
 | R155-6.9 | Yarış koşulu / mantık hatası istismarı | ✅ Bitmiş |
 | R155-6.10 | Araç içinde saklanan kişisel veriye yetkisiz erişim | ✅ Bitmiş |
-| R155-6.11 | Olay veri kaydı (EDR / kara kutu) manipülasyonu | 🔧 Yazılımla yapılabilir |
-| R155-6.12 | Tedarik zinciri yazılım saldırısı (üçüncü taraf bileşen) | 🔧 Yazılımla yapılabilir |
+| R155-6.11 | Olay veri kaydı (EDR / kara kutu) manipülasyonu | ✅ Bitmiş |
+| R155-6.12 | Tedarik zinciri yazılım saldırısı (üçüncü taraf bileşen) | ✅ Bitmiş |
 | R155-6.13 | Güvenli önyükleme (Secure Boot) atlatma | ✅ Bitmiş |
-| R155-6.14 | Hipervizör / konteyner ortamından kaçış | 🔧 Yazılımla yapılabilir |
+| R155-6.14 | Hipervizör / konteyner ortamından kaçış | ✅ Bitmiş |
 
 ## Kategori 7 — Araç fiziksel zafiyetlerine yönelik tehditler
 
@@ -117,10 +119,10 @@
 
 | Durum | Sayı |
 |---|---|
-| ✅ Bitmiş | 52 |
-| 🔧 Yazılımla yapılabilir (kalan) | 3 |
+| ✅ Bitmiş | 55 |
+| 🔧 Yazılımla yapılabilir (kalan) | 0 |
 | 🔩 Donanım gerekli | 14 |
 | **Yazılım tavanı (bitmiş + yapılabilir)** | **55** |
 | **Toplam** | **69** |
 
-**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektöre ulaştığında (şu an 52/55), yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınır.
+**Sonuç:** Proje, yazılımla ulaşılabilecek 55/69 vektörün TAMAMINA (55/55) ulaşmış olup, yazılım platformu anlamında TAMAMLANMIŞ sayılır. Kalan 14 vektör, gerçek donanım/lab ekipmanı gerektiren ayrı bir faz olarak (CARLA gibi) ileride ele alınabilir.
