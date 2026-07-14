@@ -156,6 +156,15 @@ components:
     networks: []
     test_status: "not_tested"
 
+  - id: "fleet_operations_security"
+    label: "Filo Operasyonları Güvenlik Süreçleri"
+    category: "human"
+    position_3d: [0.0, 3.2, 0.0]
+    attack_surfaces: ["human", "backend"]
+    r155_vectors: ["R155-4.1", "R155-4.3", "R155-4.5"]
+    networks: []
+    test_status: "not_tested"
+
   # ── Fiziksel / Donanım ──────────────────────────────────────────────────
   - id: "debug_ports"
     label: "Debug Portları (JTAG/UART)"

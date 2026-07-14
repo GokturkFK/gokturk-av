@@ -40,6 +40,7 @@ from plugins.modules.app_layer_plugin import AppLayerPlugin
 from plugins.modules.personal_data_plugin import PersonalDataPlugin
 from plugins.modules.comm_interception_plugin import CommInterceptionPlugin
 from plugins.modules.firmware_extraction_plugin import FirmwareExtractionPlugin
+from plugins.modules.human_factor_plugin import HumanFactorPlugin
 from core.report_generator import generate_compliance_report
 from core.attack_surface import compute_component_statuses, build_attack_surface_html
 from core.compliance_heatmap import compute_vector_statuses, build_heatmap_html
@@ -344,6 +345,13 @@ def test_mock_firmware_extraction_probe_behaviour():
         assert _mock("vulnerable").firmware_extraction_probe("hpc_compute", scn)["accepted"] is True
         assert _mock("secure").firmware_extraction_probe("hpc_compute", scn)["accepted"] is False
         assert _mock("empty").firmware_extraction_probe("hpc_compute", scn)["accepted"] is False
+
+
+def test_mock_human_factor_probe_behaviour():
+    for scn in ("phishing_susceptibility", "insecure_default_config", "operator_misconfiguration_unchecked"):
+        assert _mock("vulnerable").human_factor_probe("fleet_operations_security", scn)["accepted"] is True
+        assert _mock("secure").human_factor_probe("fleet_operations_security", scn)["accepted"] is False
+        assert _mock("empty").human_factor_probe("fleet_operations_security", scn)["accepted"] is False
 
 
 def test_mock_firmware_integrity_probe_behaviour():
@@ -924,6 +932,60 @@ def test_firmware_extraction_inconclusive_when_adapter_unsupported():
     assert f.status == "inconclusive"
 
 
+def test_human_factor_matrix():
+    vuln = HumanFactorPlugin(_mock("vulnerable")).run({"id": "fleet_operations_security"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
+    assert HumanFactorPlugin(_mock("secure")).run({"id": "fleet_operations_security"}).status == "not_vulnerable"
+    assert HumanFactorPlugin(_mock("empty")).run({"id": "fleet_operations_security"}).status == "not_vulnerable"
+
+
+def test_human_factor_vulnerable_returns_three_distinct_vectors():
+    findings = HumanFactorPlugin(_mock("vulnerable")).run({"id": "fleet_operations_security"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-4.1", "R155-4.3", "R155-4.5"]
+    assert all(f.r155_category == 4 for f in findings)
+    assert all(f.is_vulnerable() for f in findings)
+    phishing_finding = next(f for f in findings if f.r155_vector_id == "R155-4.1")
+    assert phishing_finding.impact_privacy == "high"
+    default_finding = next(f for f in findings if f.r155_vector_id == "R155-4.3")
+    assert default_finding.impact_safety == "high"
+    misconfig_finding = next(f for f in findings if f.r155_vector_id == "R155-4.5")
+    assert misconfig_finding.impact_safety == "high"
+
+
+def test_human_factor_lists_all_three_scenarios():
+    findings = HumanFactorPlugin(_mock("vulnerable")).run({"id": "fleet_operations_security"})
+    assert len(findings) == 3
+
+
+def test_human_factor_secure_reports_all_protected():
+    f = HumanFactorPlugin(_mock("secure")).run({"id": "fleet_operations_security"})
+    assert f.status == "not_vulnerable"
+    assert "korumal" in f.title.lower() or "aktif" in f.title.lower()
+
+
+def test_human_factor_inconclusive_when_adapter_unsupported():
+    from adapters.base_adapter import BaseAdapter
+
+    class _BareAdapter(BaseAdapter):
+        adapter_type = "bare"
+
+        def connect(self):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def is_connected(self):
+            return self._connected
+
+    bare = _BareAdapter({})
+    bare.connect()
+    f = HumanFactorPlugin(bare).run({"id": "fleet_operations_security"})
+    assert f.status == "inconclusive"
+
+
 def test_base_plugin_is_abstract():
     with pytest.raises(TypeError):
         BasePlugin(_mock())  # abstract run() → örneklenemez
@@ -940,7 +1002,7 @@ def test_orchestrator_discovers_all_plugins():
             "adversarial-ml", "backend-server", "diag-access-abuse",
             "debug-port-access", "firmware-integrity", "physical-ecu-access",
             "external-device-access", "app-layer", "personal-data-protection",
-            "comm-interception", "firmware-extraction"} <= ids
+            "comm-interception", "firmware-extraction", "human-factor"} <= ids
 
 
 def test_orchestrator_run_persists_findings(tmp_path, profile):

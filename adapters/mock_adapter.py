@@ -481,3 +481,30 @@ class MockAdapter(BaseAdapter):
             "firmware_reverse_engineering": "Şifrelenmemiş firmware imajı başarıyla disassemble/decompile edildi",
         }.get(scenario, "Koruma atlatıldı")
         return {"accepted": True, "detail": detail}
+
+    def human_factor_probe(self, target: str, scenario: str) -> Dict:
+        # secure modda MFA/step-up doğrulama, sertleştirilmiş dağıtım taban
+        # çizgisi ve değişiklik yönetimi kapısı hepsi devrede. vulnerable
+        # modda üçü de yok/atlanabilir. empty modda hedef erişilemez
+        # (korumalı sayılır — süreç değerlendirilemedi anlamında).
+        if self.mode == "empty":
+            detail = {
+                "phishing_susceptibility": "Personel/operatör kaydı erişilemez",
+                "insecure_default_config": "Dağıtım taban çizgisi kaydı erişilemez",
+                "operator_misconfiguration_unchecked": "Değişiklik yönetimi kaydı erişilemez",
+            }.get(scenario, "Yanıt yok")
+            return {"accepted": False, "detail": detail}
+        if self.mode == "secure":
+            detail = {
+                "phishing_susceptibility": "MFA/step-up doğrulama, tek kimlik bilgisiyle ele geçirmeyi engelledi",
+                "insecure_default_config": "Yeni bileşenler sertleştirilmiş taban çizgisiyle devreye giriyor, varsayılan ayar yok",
+                "operator_misconfiguration_unchecked": "Değişiklik yönetimi kapısı, incelenmemiş yapılandırma değişikliğini reddetti",
+            }.get(scenario, "Koruma aktif")
+            return {"accepted": False, "detail": detail}
+        # vulnerable
+        detail = {
+            "phishing_susceptibility": "Tek bir kimlik bilgisi girişiyle (MFA/step-up yok) hesap tamamen ele geçirildi",
+            "insecure_default_config": "Yeni devreye alınan bileşen üretici varsayılan parola/açık debug modu ile çalışıyor",
+            "operator_misconfiguration_unchecked": "Operatörün güvenlik duvarı/loglama değişikliği inceleme olmadan doğrudan uygulandı",
+        }.get(scenario, "Koruma atlatıldı")
+        return {"accepted": True, "detail": detail}
