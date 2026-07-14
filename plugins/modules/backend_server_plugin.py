@@ -1,24 +1,28 @@
 """
 GÖKTÜRK — Arka Uç / Filo Yönetim Sunucusu Güvenlik Modülü (R155 Kategori 1)
-Taktik: aracın bağlandığı backend (filo yönetim/telematik) sunucusuna üç
+Taktik: aracın bağlandığı backend (filo yönetim/telematik) sunucusuna beş
 senaryo uygular:
 
-  - weak_auth               → R155-1.1 (yetkisiz uzaktan sunucu erişimi)
-  - dos                     → R155-1.5 (araç servisleri arka uç sunucusuna DoS)
-  - supply_chain_compromise → R155-1.4 (tedarik zinciri saldırısı — backend)
+  - weak_auth                       → R155-1.1 (yetkisiz uzaktan sunucu erişimi)
+  - insider_privilege_abuse         → R155-1.2 (personel tarafından hak kötüye kullanımı)
+  - unrestricted_internet_exposure  → R155-1.3 (sunucuya yetkisiz internet erişimi)
+  - supply_chain_compromise         → R155-1.4 (tedarik zinciri saldırısı — backend)
+  - dos                             → R155-1.5 (araç servisleri arka uç sunucusuna DoS)
 
 Saha araştırmasında vurgulandığı gibi backend, filo homojenliği nedeniyle
 özellikle kritik bir yüzeydir: tek bir backend zaafı TÜM FİLOYU aynı anda
-etkileyebilir. İlk iki senaryo bu ilkeyi doğrudan sınarken, üçüncü senaryo
-(supply_chain_compromise) bu modülün kendi remediation metninde başından
-beri "(R155-1.4)" olarak anılan ama hiçbir Finding üretmeyen bir boşluğu
-kapatır: weak_auth sunucuya DOĞRUDAN erişimi test ederken,
-supply_chain_compromise sunucunun GÜVENDİĞİ tedarik zincirini (CI/CD
-hattına giren üçüncü taraf paket/kütüphane/konteyner imajı) hedefler —
-saldırgan sunucuyla hiç doğrudan etkileşmeden, ona giden yazılımı zehirler.
+etkileyebilir.
+
+Dört farklı katman test edilir: weak_auth kimlik doğrulamanın GÜCÜNÜ,
+insider_privilege_abuse ZATEN geçerli bir oturumun yetki/en-az-yetki
+sınırını, unrestricted_internet_exposure arayüzün BAŞTAN İTİBAREN
+internetten erişilebilir olup olmaması gereken ağ çevre güvenliğini
+(perimeter), supply_chain_compromise ise sunucunun GÜVENDİĞİ tedarik
+zincirini hedefler — dördü de farklı bir savunma katmanının kendi
+başına yeterli olmadığını gösterir.
 
 Her zafiyetli senaryo, KENDİ R155 vektörüyle AYRI bir Finding olarak
-raporlanır (List[Finding]) — böylece her üç vektör de kapsam sayımına
+raporlanır (List[Finding]) — böylece beş vektör de kapsam sayımına
 doğru şekilde yansır.
 """
 
@@ -63,6 +67,35 @@ _SCENARIOS = {
             "(allow-list) al; imzasız/doğrulanmamış kaynaklardan çekmeyi engelle."
         ),
     },
+    "insider_privilege_abuse": {
+        "vector": "R155-1.2",
+        "label": "Personel tarafından hak kötüye kullanımı",
+        "impact_safety": "medium",
+        "impact_privacy": "high",
+        "cvss": 6.8,
+        "remediation": (
+            "1. En az yetki (least privilege) ilkesini rol tabanlı erişim "
+            "kontrolü (RBAC) ile teknik olarak zorunlu kıl; yetki genişletmeyi "
+            "yalnızca onay süreciyle mümkün kıl. "
+            "2. Kapsam dışı/hassas işlemleri (toplu veri dışa aktarma, başka "
+            "operatörün filosuna erişim) değişmez denetim kaydına (immutable "
+            "audit log) yaz ve anomali tespitiyle işaretle."
+        ),
+    },
+    "unrestricted_internet_exposure": {
+        "vector": "R155-1.3",
+        "label": "Sunucuya yetkisiz internet erişimi",
+        "impact_safety": "high",
+        "impact_privacy": "medium",
+        "cvss": 7.5,
+        "remediation": (
+            "1. Yönetim paneli/iç API'leri genel internetten tamamen kaldır; "
+            "yalnızca VPN veya kurumsal ağ üzerinden erişilebilir yap. "
+            "2. Ağ segmentasyonu ve IP izin listesi (allow-list) ile dış "
+            "dünyaya açık yüzeyi asgariye indir; düzenli dış yüzey taraması "
+            "(attack surface scanning) yap."
+        ),
+    },
 }
 
 _COMMON_REMEDIATION = (
@@ -83,9 +116,10 @@ class BackendServerPlugin(BasePlugin):
     severity_hint = "high"
     description = (
         "Araç filo yönetim/telematik backend sunucusuna zayıf kimlik "
-        "doğrulama (R155-1.1), servis engelleme (R155-1.5) ve tedarik "
-        "zinciri saldırısı (R155-1.4) senaryolarıyla erişim/dayanıklılık "
-        "testi yapar."
+        "doğrulama (R155-1.1), personel hak kötüye kullanımı (R155-1.2), "
+        "yetkisiz internet erişimi (R155-1.3), tedarik zinciri saldırısı "
+        "(R155-1.4) ve servis engelleme (R155-1.5) senaryolarıyla erişim/"
+        "dayanıklılık testi yapar."
     )
 
     def run(self, component_config: dict):
@@ -127,7 +161,7 @@ class BackendServerPlugin(BasePlugin):
                 status="not_vulnerable",
                 title="Backend Sunucu: Erişim/dayanıklılık korumaları aktif",
                 description=(
-                    "Üç backend saldırı senaryosunun tamamı ilgili koruma "
+                    "Beş backend saldırı senaryosunun tamamı ilgili koruma "
                     "mekanizması tarafından engellendi:\n\n" + "\n".join(lines)
                 ),
                 attack_feasibility="high",

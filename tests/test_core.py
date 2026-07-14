@@ -284,7 +284,8 @@ def test_mock_adversarial_perturbation_behaviour():
 
 
 def test_mock_backend_server_probe_behaviour():
-    for scn in ("weak_auth", "dos", "supply_chain_compromise"):
+    for scn in ("weak_auth", "dos", "supply_chain_compromise",
+                "insider_privilege_abuse", "unrestricted_internet_exposure"):
         assert _mock("vulnerable").backend_server_probe("telematics_module", scn)["accepted"] is True
         assert _mock("secure").backend_server_probe("telematics_module", scn)["accepted"] is False
         assert _mock("empty").backend_server_probe("telematics_module", scn)["accepted"] is False
@@ -564,21 +565,25 @@ def test_backend_server_matrix():
     assert BackendServerPlugin(_mock("empty")).run({"id": "telematics_module"}).status == "not_vulnerable"
 
 
-def test_backend_server_vulnerable_returns_three_distinct_vectors():
+def test_backend_server_vulnerable_returns_five_distinct_vectors():
     findings = BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
     vectors = sorted(f.r155_vector_id for f in findings)
-    assert vectors == ["R155-1.1", "R155-1.4", "R155-1.5"]
+    assert vectors == ["R155-1.1", "R155-1.2", "R155-1.3", "R155-1.4", "R155-1.5"]
     assert all(f.r155_category == 1 for f in findings)
     auth_finding = next(f for f in findings if f.r155_vector_id == "R155-1.1")
     assert auth_finding.impact_safety == "high"
     assert auth_finding.impact_privacy == "high"
     supply_chain_finding = next(f for f in findings if f.r155_vector_id == "R155-1.4")
     assert supply_chain_finding.impact_privacy == "high"
+    insider_finding = next(f for f in findings if f.r155_vector_id == "R155-1.2")
+    assert insider_finding.impact_privacy == "high"
+    exposure_finding = next(f for f in findings if f.r155_vector_id == "R155-1.3")
+    assert exposure_finding.impact_safety == "high"
 
 
-def test_backend_server_lists_all_three_scenarios():
+def test_backend_server_lists_all_five_scenarios():
     findings = BackendServerPlugin(_mock("vulnerable")).run({"id": "telematics_module"})
-    assert len(findings) == 3
+    assert len(findings) == 5
 
 
 def test_backend_server_secure_reports_all_protected():
