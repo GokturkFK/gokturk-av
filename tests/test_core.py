@@ -432,28 +432,35 @@ def test_v2x_spoof_inconclusive_when_adapter_unsupported():
 
 
 def test_ecu_fuzz_matrix():
-    assert ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"}).status == "vulnerable"
+    vuln = ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"})
+    assert isinstance(vuln, list) and all(f.status == "vulnerable" for f in vuln)
     assert ECUFuzzPlugin(_mock("secure")).run({"id": "hpc"}).status == "not_vulnerable"
     assert ECUFuzzPlugin(_mock("empty")).run({"id": "hpc"}).status == "inconclusive"
 
 
-def test_ecu_fuzz_carries_correct_taxonomy():
-    f = ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"})
-    assert f.r155_vector_id == "R155-6.8"
-    assert f.r155_category == 6
-    assert f.is_vulnerable()
-    assert f.impact_safety == "high"
+def test_ecu_fuzz_splits_memory_fault_and_hang_vectors():
+    findings = ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"})
+    vectors = sorted(f.r155_vector_id for f in findings)
+    assert vectors == ["R155-6.8", "R155-6.9"]
+    assert all(f.r155_category == 6 for f in findings)
+    assert all(f.is_vulnerable() for f in findings)
+    mem_finding = next(f for f in findings if f.r155_vector_id == "R155-6.8")
+    assert mem_finding.impact_safety == "high"
+    hang_finding = next(f for f in findings if f.r155_vector_id == "R155-6.9")
+    assert hang_finding.impact_safety == "high"
+    assert "hang" in hang_finding.title.lower() or "yanıtsız" in hang_finding.title.lower()
 
 
 def test_ecu_fuzz_reports_memory_fault_in_title():
-    f = ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"})
-    assert "fault" in f.title.lower() or "bozulma" in f.title.lower()
+    findings = ECUFuzzPlugin(_mock("vulnerable")).run({"id": "hpc"})
+    mem_finding = next(f for f in findings if f.r155_vector_id == "R155-6.8")
+    assert "fault" in mem_finding.title.lower() or "bozulma" in mem_finding.title.lower()
 
 
 def test_ecu_fuzz_mode_config_respected():
     plugin = ECUFuzzPlugin(_mock("vulnerable"), config={"fuzz_mode": "dumb", "count": 200})
-    f = plugin.run({"id": "hpc"})
-    assert f.status == "vulnerable"
+    findings = plugin.run({"id": "hpc"})
+    assert isinstance(findings, list) and all(f.status == "vulnerable" for f in findings)
 
 
 def test_ota_attack_matrix():

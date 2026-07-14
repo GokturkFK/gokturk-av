@@ -1,18 +1,28 @@
 """
 GÖKTÜRK — ECU Firmware Fuzzing Test Modülü
 Taktik: bir ECU'ya yapılandırılmış fuzzing girdileri (dumb / smart /
-replay-mutate) göndererek girdi doğrulama eksikliğini ve bellek bozulması
-(buffer overflow) / mantık hatası kaynaklı çökme belirtilerini tespit eder.
+replay-mutate) göndererek girdi doğrulama eksikliğini, bellek bozulması
+(buffer overflow) belirtilerini VE mantık hatası/yarış koşulu kaynaklı
+yanıtsızlık (hang) belirtilerini ayrı ayrı tespit eder.
 
 CAN Fuzz (R155-2.2) ağ katmanında mesaj enjeksiyonunu ölçerken, bu modül
-ECU'nun KENDİSİNİ (firmware/bellek) hedefler ve bellek bozulması sinyallerini
-arar.
+ECU'nun KENDİSİNİ (firmware/bellek) hedefler.
 
-R155-6.8: Arabellek taşması / bellek bozulması istismarı
-(ikincil: R155-6.9 yarış koşulu / mantık hatası — 'hang' sinyaliyle)
+İki sinyal, İKİ AYRI R155 vektörüne çapalanır:
+  - memory_fault → R155-6.8 (arabellek taşması / bellek bozulması istismarı)
+  - hang         → R155-6.9 (yarış koşulu / mantık hatası istismarı — girdi,
+                    ECU'yu çökertmeden ama yanıt vermez hale getirerek bir
+                    mantık/senkronizasyon hatasını tetikler)
+
+Her ikisi de gözlemlenirse, her biri KENDİ R155 vektörüyle AYRI bir Finding
+olarak raporlanır (List[Finding]) — böylece iki vektör de kapsam sayımına
+doğru şekilde yansır; hiçbiri diğerinin gölgesinde kaybolmaz.
 """
 
 from ..base_plugin import BasePlugin, Finding
+
+_MEMORY_FAULT_VECTOR = "R155-6.8"
+_HANG_VECTOR = "R155-6.9"
 
 
 class ECUFuzzPlugin(BasePlugin):
@@ -20,25 +30,23 @@ class ECUFuzzPlugin(BasePlugin):
     name = "ECU Firmware Fuzzing"
     surface = "firmware"
     technique = "fuzzing"
-    r155_vector_id = "R155-6.8"
+    r155_vector_id = _MEMORY_FAULT_VECTOR
     r155_category = 6
     avcat_id = "ECU-MEMFUZZ"
     applicable_adapters = ["socketcan", "carla"]
     severity_hint = "high"
     description = (
-        "Bir ECU'ya yapılandırılmış fuzzing girdileri göndererek girdi doğrulama "
-        "eksikliğini ve bellek bozulması (buffer overflow) / mantık hatası "
-        "kaynaklı çökmeleri tespit eder."
+        "Bir ECU'ya yapılandırılmış fuzzing girdileri göndererek bellek "
+        "bozulması (R155-6.8) ve yarış koşulu/mantık hatası kaynaklı "
+        "yanıtsızlık (R155-6.9) belirtilerini ayrı ayrı tespit eder."
     )
 
-    # Bu modülün hedeflediği bileşen kategorileri (orchestrator surface/vektör
-    # eşleşmesine ek bağlamsal bilgi; zorunlu değil ama belge amaçlı).
     applicable_component_categories = ("compute", "network", "ecu")
 
-    DEFAULT_MODE = "smart"       # dumb / smart / replay-mutate
+    DEFAULT_MODE = "smart"
     DEFAULT_COUNT = 200
 
-    def run(self, component_config: dict) -> Finding:
+    def run(self, component_config: dict):
         comp_id = component_config.get("id", "unknown")
         mode = str(self.config.get("fuzz_mode", self.DEFAULT_MODE))
         count = int(self.config.get("count", self.DEFAULT_COUNT))
@@ -94,24 +102,22 @@ class ECUFuzzPlugin(BasePlugin):
                 attack_feasibility="high",
             )
 
-        # En az bir girdi işlendi → bellek bozulması sinyallerine bak
-        if mem_faults or hangs:
-            return Finding(
+        findings = []
+
+        if mem_faults:
+            findings.append(Finding(
                 component_id=comp_id,
                 test_module_id=self.module_id,
-                r155_vector_id=self.r155_vector_id,
+                r155_vector_id=_MEMORY_FAULT_VECTOR,
                 r155_category=self.r155_category,
                 avcat_id=self.avcat_id,
                 status="vulnerable",
-                title=(
-                    f"ECU Fuzz: Bellek bozulması tetiklendi ({comp_id}) — "
-                    f"{mem_faults} fault, {hangs} hang"
-                ),
+                title=f"ECU Fuzz: Bellek bozulması tetiklendi ({comp_id}) — {mem_faults} fault",
                 description=(
                     f"'{comp_id}' hedefine gönderilen {len(results)} {mode} fuzzing "
                     f"girdisinden {accepted} tanesi işlendi; {mem_faults} tanesi "
-                    f"bellek bozulması (buffer overflow / memory corruption) ve "
-                    f"{hangs} tanesi ECU hang (yanıtsızlık) tetikledi.\n\n"
+                    "bellek bozulması (buffer overflow / memory corruption) "
+                    "tetikledi.\n\n"
                     "Bellek bozulması, kontrollü koşullarda rastgele kod yürütmeye "
                     "(RCE) kadar tırmanabilir; güvenlik-kritik bir ECU'da bu doğrudan "
                     "safety etkisi taşır."
@@ -129,22 +135,61 @@ class ECUFuzzPlugin(BasePlugin):
                     "4. Güvenlik-kritik ECU'ları bellek koruma birimi (MPU) ile izole et."
                 ),
                 cvss_score=8.2,
-            )
+            ))
 
-        # Girdiler işlendi ama fault yok → zayıf ama net bir bulgu
+        if hangs:
+            findings.append(Finding(
+                component_id=comp_id,
+                test_module_id=self.module_id,
+                r155_vector_id=_HANG_VECTOR,
+                r155_category=self.r155_category,
+                avcat_id=self.avcat_id,
+                status="vulnerable",
+                title=f"ECU Fuzz: Yanıtsızlık/hang tetiklendi ({comp_id}) — {hangs} hang",
+                description=(
+                    f"'{comp_id}' hedefine gönderilen {len(results)} {mode} fuzzing "
+                    f"girdisinden {accepted} tanesi işlendi; {hangs} tanesi ECU'yu "
+                    "çökertmeden ama yanıt vermez hale getirdi (hang).\n\n"
+                    "Çökme veya bellek bozulması olmadan yanıtsız kalması, "
+                    "genellikle bir yarış koşulu (race condition), kilitlenme "
+                    "(deadlock) veya durum makinesi mantık hatasına işaret eder. "
+                    "Sürekli işlem gerektiren güvenlik-kritik bir ECU'nun "
+                    "yanıtsız kalması, kendi başına bir DoS ve operasyonel "
+                    "süreklilik riskidir."
+                ),
+                impact_safety="high",
+                impact_operational="high",
+                impact_financial="low",
+                attack_feasibility="medium",
+                remediation=(
+                    "1. Durum makinesi/kilitleme mantığını yarış koşulu analizi "
+                    "(ör. statik analiz, ThreadSanitizer) ile denetle. "
+                    "2. Kritik işlemlere watchdog zaman aşımı ve otomatik kurtarma "
+                    "(recovery) ekle. "
+                    "3. Girdi işleme sırasına bağlı senkronizasyon varsayımlarını "
+                    "kaldır; durum geçişlerini idempotent ve zaman aşımlı tasarla. "
+                    "4. Fuzzing'i CI güvenlik test hattına dahil ederek "
+                    "regresyonları erken yakala."
+                ),
+                cvss_score=6.5,
+            ))
+
+        if findings:
+            return findings
+
         return Finding(
             component_id=comp_id,
             test_module_id=self.module_id,
-            r155_vector_id=self.r155_vector_id,
+            r155_vector_id=_MEMORY_FAULT_VECTOR,
             r155_category=self.r155_category,
             avcat_id=self.avcat_id,
             status="vulnerable",
             title=f"ECU Fuzz: Girdiler doğrulanmadan işlendi ({comp_id})",
             description=(
                 f"{accepted}/{len(results)} {mode} fuzzing girdisi ECU tarafından "
-                "reddedilmeden işlendi. Çökme gözlenmedi ancak girdi doğrulama "
-                "eksikliği, daha hedefli bir saldırıyla bellek bozulmasına "
-                "yol açabilir."
+                "reddedilmeden işlendi. Çökme veya hang gözlenmedi ancak girdi "
+                "doğrulama eksikliği, daha hedefli bir saldırıyla bellek "
+                "bozulmasına yol açabilir."
             ),
             impact_safety="medium",
             impact_operational="medium",
