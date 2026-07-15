@@ -8,8 +8,8 @@
 ![UI](https://img.shields.io/badge/UI-Streamlit-red)
 ![DB](https://img.shields.io/badge/DB-SQLite-lightgrey)
 ![Framework](https://img.shields.io/badge/Framework-UN%20R155%20%2F%20ISO%2021434-orange)
-![Kapsam](https://img.shields.io/badge/R155%20Kapsam-19%2F69-green)
-![Modüller](https://img.shields.io/badge/Test%20Modülü-15-success)
+![Kapsam](https://img.shields.io/badge/R155%20Kapsam-55%2F69-green)
+![Modüller](https://img.shields.io/badge/Test%20Modülü-29-success)
 ![Sürüm](https://img.shields.io/badge/Sürüm-v0.2.0-informational)
 ![Lisans](https://img.shields.io/badge/Lisans-Özel-lightgrey)
 
@@ -91,13 +91,14 @@ CAN/ROS2/CARLA ortamında **değişmeden** çalışır.
 ## Kapsam Durumu
 
 <div align="center">
-<img src="docs/assets/coverage_heatmap.svg" alt="UN R155 Annex 5 kapsam ısı haritası — 19/69 vektör" width="760">
+<img src="docs/assets/coverage_heatmap.svg" alt="UN R155 Annex 5 kapsam ısı haritası — 55/69 vektör" width="760">
 </div>
 
-**19 / 69 R155 Annex 5 vektörü** çalışır bir test modülüyle kapsanıyor ve
+**55 / 69 R155 Annex 5 vektörü** çalışır bir test modülüyle kapsanıyor — bu,
+**yazılımla ulaşılabilir tüm vektörlerin (55/55) tamamı** anlamına gelir ve
 **7 tehdit kategorisinin tamamı** en az bir vektörle temsil ediliyor. Kalan
-vektörlerin yazılımla ilerletilebilir olanları ile gerçek donanım/lab (osiloskop,
-SDR, chip-off vb.) gerektirenlerin tam dökümü için kapsam yol haritasına bakın.
+14 vektörün tamamı gerçek donanım/lab (osiloskop, SDR, chip-off vb.) gerektirir;
+tam döküm için kapsam yol haritasına bakın.
 
 📄 [Kapsam Yol Haritası →](docs/coverage_roadmap.md) · [TARA Belgesi →](docs/tara.md) · [Saha Araştırması →](docs/saha-arastirmasi.md)
 
@@ -105,25 +106,39 @@ SDR, chip-off vb.) gerektirenlerin tam dökümü için kapsam yol haritasına ba
 
 ## Test Modülleri
 
-15 test modülü, her biri bir UN R155 Annex 5 vektörüne çapalı ve adaptör
-katmanı üzerinden mock ↔ gerçek ortamda değişmeden çalışır.
+29 test modülü, her biri bir veya birden fazla UN R155 Annex 5 vektörüne çapalı
+ve adaptör katmanı üzerinden mock ↔ gerçek ortamda değişmeden çalışır.
 
 | R155 Vektörü | Modül | Açıklama | Dosya |
 |:---|:---|:---|:---|
-| `R155-1.1` | Arka Uç Sunucu Güvenliği | Yetkisiz uzaktan sunucu erişimi | `backend_server_plugin.py` |
+| `R155-1.1,1.2,1.3,1.4,1.5` | Arka Uç Sunucu Güvenliği | Zayıf kimlik doğrulama, personel hak kötüye kullanımı, yetkisiz internet erişimi, tedarik zinciri, DoS | `backend_server_plugin.py` |
 | `R155-2.2` | CAN Fuzzing (Mesaj Enjeksiyonu) | Mesaj enjeksiyonu (CAN, Ethernet) | `can_fuzz_plugin.py` |
+| `R155-2.3,2.6` | İletişim Kanalı Dinleme/Araya Girme | Bilgi dinleme/sniffing ve ortadaki adam/MitM | `comm_interception_plugin.py` |
+| `R155-2.4` | CAN Bus Servis Engelleme (DoS) | Servis engelleme / DoS | `can_dos_plugin.py` |
 | `R155-2.5` | CAN Replay Saldırısı | Replay saldırısı | `can_replay_plugin.py` |
-| `R155-2.7` | V2X Mesaj Manipülasyonu | V2X mesaj manipülasyonu | `v2x_spoof_plugin.py` |
+| `R155-2.1,2.7,5.12` | V2X Mesaj Manipülasyonu | İmzasız BSM enjeksiyonu, kimlik taklidi, V2I altyapı güveni sömürüsü | `v2x_spoof_plugin.py` |
 | `R155-2.8` | GPS/GNSS Spoofing | GPS/GNSS konum sahteciliği | `gps_spoof_plugin.py` |
 | `R155-2.9` | LiDAR Spoofing | Sensör (LiDAR/kamera/radar) spoofing | `lidar_spoof_plugin.py` |
-| `R155-3.4` | OTA / Firmware Güncelleme Saldırısı | İmza doğrulama atlatma | `ota_attack_plugin.py` |
+| `R155-2.11,2.13` | Kablosuz RF Arayüzleri | Hücresel jamming ve DSRC/802.11p protokol istismarı | `wireless_rf_plugin.py` |
+| `R155-3.1,3.2,3.3,3.4,3.5,3.6,3.7` | OTA / Firmware Güncelleme Saldırısı | Build manipülasyonu, kanal DoS, yetkisiz yükleme, imza atlatma, gizlilik, rollback, manifest | `ota_attack_plugin.py` |
+| `R155-4.1,4.3,4.5` | İnsan/Kurumsal Faktörler | Phishing telafi kontrolü, güvenli varsayılan yapılandırma, değişiklik yönetimi | `human_factor_plugin.py` |
 | `R155-4.2` | Teşhis Erişimi Suistimali | Meşru teşhis erişiminin kötüye kullanımı | `diag_access_abuse_plugin.py` |
+| `R155-4.4,5.2,5.3` | Harici Cihaz Bağlantı Erişimi | Bluetooth eşleştirme, USB autorun, filo politikası cihaz kaydı | `external_device_access_plugin.py` |
+| `R155-5.1` | Telematik Kanalı İstismarı | Telematik kanalı istismarı (hücresel/WiFi) | `telematics_channel_plugin.py` |
+| `R155-5.4` | IVI / Infotainment Üzerinden Pivot | IVI / infotainment üzerinden pivot | `ivi_pivot_plugin.py` |
 | `R155-5.5` | OBD-II / UDS Servis Enumerasyonu | OBD-II teşhis portu istismarı | `obd2_enum_plugin.py` |
 | `R155-5.6` | ROS2/DDS Topic Keşfi | ROS2/DDS kimliksiz topic erişimi | `ros2_topic_enum_plugin.py` |
 | `R155-5.7` | ROS2/DDS Mesaj Enjeksiyonu | ROS2/DDS mesaj enjeksiyonu | `ros2_topic_injection_plugin.py` |
-| `R155-6.1` | Firmware / Yazılım Bütünlüğü | Firmware değiştirme / zararlı kod | `firmware_integrity_plugin.py` |
+| `R155-5.9,5.10` | Bağlantılı Uygulama Katmanı | Mobil uygulama API güvenliği, 3. taraf IVI uygulaması ayrıcalık aşımı | `app_layer_plugin.py` |
+| `R155-5.11` | Araç-Bulut API Yetkisiz Erişimi | Araçlar arası nesne düzeyinde yetkilendirme aşımı (BOLA) | `cloud_api_plugin.py` |
+| `R155-5.13` | Uzaktan Telematik Sistemi Exploit | Uzaktan telematik sisteme exploit ile erişim | `remote_telematics_exploit_plugin.py` |
+| `R155-6.1,6.4,6.13` | Firmware / Yazılım Bütünlüğü | Firmware değiştirme, yazılım bütünlüğü ihlali, Secure Boot atlatma | `firmware_integrity_plugin.py` |
+| `R155-6.2,6.5` | Firmware Çıkarma / Tersine Mühendislik | Kriptografik anahtar çalma, ECU firmware tersine mühendislik | `firmware_extraction_plugin.py` |
+| `R155-6.3,6.10` | Araç İçi Kişisel Veri Koruması | Kişisel veri sızdırma (transit) ve yetkisiz erişim (at-rest) | `personal_data_plugin.py` |
 | `R155-6.7` | Adversarial ML / Algı Manipülasyonu | Adversarial ML / algı manipülasyonu | `adversarial_ml_plugin.py` |
-| `R155-6.8` | ECU Firmware Fuzzing | Arabellek taşması / bellek bozulması istismarı | `ecu_fuzz_plugin.py` |
+| `R155-6.8,6.9` | ECU Firmware Fuzzing | Bellek bozulması ve yarış koşulu/mantık hatası | `ecu_fuzz_plugin.py` |
+| `R155-6.11,6.12,6.14` | Sistem Bütünlüğü ve İzolasyon | EDR/kara kutu manipülasyonu, 3. taraf tedarik zinciri, hipervizör/konteyner kaçışı | `system_integrity_plugin.py` |
+| `R155-7.1` | İzinsiz Fiziksel ECU Erişimi | İzinsiz fiziksel ECU erişimi | `physical_ecu_access_plugin.py` |
 | `R155-7.4` | Fiziksel Debug Portu Erişimi | Debug portları üzerinden erişim (JTAG/UART) | `debug_port_access_plugin.py` |
 
 ---
@@ -167,19 +182,16 @@ python scripts/generate_tara.py > docs/tara.md
 ---
 
 ## Proje Yapısı
-
-```
 GÖKTÜRK-AV/
 ├── core/         → Çekirdek motor (finding store, orchestrator, raporlama, 3D harita, ısı haritası)
 ├── adapters/     → Araç bağlantı adaptörleri (SocketCAN, mock, CARLA — planlı)
-├── plugins/      → Test modülleri (15 modül, R155 vektörüne çapalı)
+├── plugins/      → Test modülleri (29 modül, R155 vektörüne çapalı)
 ├── taxonomy/     → UN R155 Annex 5 taksonomisi (69 vektör, 7 kategori)
 ├── profiles/     → Araç profilleri (YAML) + şema dokümantasyonu
 ├── scripts/      → TARA belge üreticisi
 ├── ui/           → Streamlit panosu (Araç Seçimi, Saldırı Yüzeyi, Test, Bulgular, Uyumluluk, Rapor)
 ├── docs/         → TARA belgesi, kapsam yol haritası, saha araştırması, görseller
 └── data/         → SQLite DB (runtime, .gitignore'da)
-```
 
 ---
 
