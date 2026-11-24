@@ -174,6 +174,24 @@ gokturk-av/
 | **Vehicle-Agnostic Core** | The orchestration engine has zero hardcoded knowledge of specific vehicle models. |
 | **Pluggable Adapters** | Adding a vehicle or bus protocol requires only a new adapter; switching mock ↔ live leaves plugin code untouched. |
 | **Declarative Profiles** | Extending coverage to new fleets or shuttle architectures requires only YAML configuration. |
+| **Taxonomy-Anchored Findings** | Every finding is anchored to an R155 vector; reports are generated automatically. |
+
+---
+
+## Documentation
+
+- 🗺️ [Coverage Roadmap](docs/coverage_roadmap.md) — live status of all 69 vectors
+- 📋 [TARA Document](docs/tara.md) — ISO/SAE 21434 risk assessment
+- 🔬 [Field Research](docs/saha-arastirmasi.md) — threat model and background
+
+---
+
+## Contributing
+
+| Role | Responsibility |
+| :--- | :--- |
+| **Security** | Test modules, TARA, finding analysis, research |
+| **DevOps** | CI/CD, Docker, environment management, backups, releases |
 
 ---
 
